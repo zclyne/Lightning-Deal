@@ -50,4 +50,8 @@ public interface UserDOMapper {
      * @mbg.generated Wed Sep 25 01:00:03 CST 2019
      */
     int updateByPrimaryKey(UserDO record);
+
+    // 通过手机号查找用户
+    UserDO selectByTelphone(String telphone);
+
 }

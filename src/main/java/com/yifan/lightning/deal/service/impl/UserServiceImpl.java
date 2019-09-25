@@ -4,11 +4,18 @@ import com.yifan.lightning.deal.dao.UserDOMapper;
 import com.yifan.lightning.deal.dao.UserPasswordDOMapper;
 import com.yifan.lightning.deal.dataobject.UserDO;
 import com.yifan.lightning.deal.dataobject.UserPasswordDO;
+import com.yifan.lightning.deal.error.BusinessException;
+import com.yifan.lightning.deal.error.EnumBusinessError;
 import com.yifan.lightning.deal.service.UserService;
 import com.yifan.lightning.deal.service.model.UserModel;
+import com.yifan.lightning.deal.validator.ValidationResult;
+import com.yifan.lightning.deal.validator.ValidatorImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 // service层必须返回model对象而不能直接返回do，do只是对数据库表的直接映射
 @Service
@@ -18,6 +25,8 @@ public class UserServiceImpl implements UserService {
     private UserDOMapper userDOMapper;
     @Autowired
     private UserPasswordDOMapper userPasswordDOMapper;
+    @Autowired
+    private ValidatorImpl validator;
 
     @Override
     public UserModel getUserById(Integer id) {
@@ -32,6 +41,59 @@ public class UserServiceImpl implements UserService {
         return convertFromDataObject(userDO, userPasswordDO);
     }
 
+    @Override
+    @Transactional
+    public void register(UserModel userModel) throws BusinessException {
+        if (userModel == null) {
+            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR);
+        }
+        // 使用apache-commons-lang中的StringUtils，不用自己判断null
+//        if (StringUtils.isEmpty(userModel.getName())
+//                || userModel.getGender() == null
+//                || userModel.getAge() == null
+//                || StringUtils.isEmpty(userModel.getTelphone())) {
+//            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR);
+//        }
+        // 使用validator对userModel做校验
+        ValidationResult result = validator.validate(userModel);
+        if (result.isHasErrors()) {
+            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, result.getErrMsg());
+        }
+
+        UserDO userDO = convertFromModel(userModel);
+        // 把新的user插入到数据库中
+        // 这里使用insertSelective而不是insert，这是为了对空字段使用数据库提供的默认值，而不会被null覆盖
+        try {
+            userDOMapper.insertSelective(userDO);
+        } catch (DuplicateKeyException ex) {
+            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "该手机号已被注册！");
+        }
+        // 插入完成后，MyBatis已经把主键回填到了userDO的id中，取出该id并放入userModel
+        userModel.setId(userDO.getId());
+        // 把新的user的密码插入到数据库中，同样使用selective
+        UserPasswordDO userPasswordDO = convertPasswordFromModel(userModel);
+        userPasswordDOMapper.insertSelective(userPasswordDO);
+    }
+
+    private UserDO convertFromModel(UserModel userModel) {
+        if (userModel == null) {
+            return null;
+        }
+        UserDO userDO = new UserDO();
+        BeanUtils.copyProperties(userModel, userDO);
+        return userDO;
+    }
+
+    private UserPasswordDO convertPasswordFromModel(UserModel userModel) {
+        if (userModel == null) {
+            return null;
+        }
+        UserPasswordDO userPasswordDO = new UserPasswordDO();
+        userPasswordDO.setEncryptPassword(userModel.getEncryptPassword());
+        userPasswordDO.setUserId(userModel.getId());
+        return userPasswordDO;
+    }
+
     private UserModel convertFromDataObject(UserDO userDO, UserPasswordDO userPasswordDO) {
         if (userDO == null) {
             return null;
@@ -42,6 +104,24 @@ public class UserServiceImpl implements UserService {
         // 把密码赋给userModel
         if (userPasswordDO != null) {
             userModel.setEncryptPassword(userPasswordDO.getEncryptPassword());
+        }
+
+        return userModel;
+    }
+
+    @Override
+    public UserModel validateLogin(String telphone, String encryptPassword) throws BusinessException {
+        // 通过用户的手机获取用户信息
+        UserDO userDO = userDOMapper.selectByTelphone(telphone);
+        if (userDO == null) {
+            throw new BusinessException(EnumBusinessError.USER_LOGIN_FAIL);
+        }
+        UserPasswordDO userPasswordDO = userPasswordDOMapper.selectByUserId(userDO.getId());
+        UserModel userModel = convertFromDataObject(userDO, userPasswordDO);
+
+        // 比对用户信息内加密的密码是否和传输进来的密码相匹配
+        if (!StringUtils.equals(encryptPassword, userModel.getEncryptPassword())) {
+            throw new BusinessException(EnumBusinessError.USER_LOGIN_FAIL);
         }
 
         return userModel;
