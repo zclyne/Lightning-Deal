@@ -1,0 +1,115 @@
+package com.yifan.lightning.deal.service.impl;
+
+import com.yifan.lightning.deal.dao.ItemDOMapper;
+import com.yifan.lightning.deal.dao.ItemStockDOMapper;
+import com.yifan.lightning.deal.dataobject.ItemDO;
+import com.yifan.lightning.deal.dataobject.ItemStockDO;
+import com.yifan.lightning.deal.error.BusinessException;
+import com.yifan.lightning.deal.error.EnumBusinessError;
+import com.yifan.lightning.deal.service.ItemService;
+import com.yifan.lightning.deal.service.model.ItemModel;
+import com.yifan.lightning.deal.validator.ValidationResult;
+import com.yifan.lightning.deal.validator.ValidatorImpl;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class ItemServiceImpl implements ItemService {
+
+    @Autowired
+    private ValidatorImpl validator;
+
+    @Autowired
+    private ItemDOMapper itemDOMapper;
+
+    @Autowired
+    private ItemStockDOMapper itemStockDOMapper;
+
+    @Override
+    @Transactional
+    public ItemModel createItem(ItemModel itemModel) throws BusinessException {
+        // 校验入参
+        ValidationResult result = validator.validate(itemModel);
+        if (result.isHasErrors()) {
+            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, result.getErrMsg());
+        }
+
+        // 转化itemmodel -> dataobject，同时处理库存对象
+        ItemDO itemDO = this.convertItemDOFromItemModel(itemModel);
+
+        // 写入数据库
+        itemDOMapper.insertSelective(itemDO);
+        // 此时，MyBatis已经把自增得到的id回填到了itemDO的id上，将其存入itemModel以供stock使用
+        itemModel.setId(itemDO.getId());
+        ItemStockDO itemStockDO = this.convertItemStockDOFromItemModel(itemModel);
+        itemStockDOMapper.insertSelective(itemStockDO);
+
+        // 返回创建完成的对象
+        return this.getItemById(itemModel.getId());
+    }
+
+    @Override
+    public List<ItemModel> listItem() {
+        List<ItemDO> itemDOList = itemDOMapper.listItem();
+        // 把list中的每一个itemDO映射为一个itemModel
+        // 这里使用了Java8的stream API
+        List<ItemModel> itemModelList = itemDOList.stream().map(itemDO -> {
+            ItemStockDO itemStockDO = itemStockDOMapper.selectByItemId(itemDO.getId());
+            ItemModel itemModel = this.convertModelFromDataObject(itemDO, itemStockDO);
+            return itemModel;
+        }).collect(Collectors.toList());
+        return itemModelList;
+    }
+
+    @Override
+    public ItemModel getItemById(Integer id) {
+        ItemDO itemDO = itemDOMapper.selectByPrimaryKey(id);
+        if (itemDO == null) {
+            return null;
+        }
+        // 获得库存数量
+        ItemStockDO itemStockDO = itemStockDOMapper.selectByItemId(itemDO.getId());
+
+        // 将DO转化为model
+        ItemModel itemModel = convertModelFromDataObject(itemDO, itemStockDO);
+
+        return itemModel;
+    }
+
+    private ItemDO convertItemDOFromItemModel(ItemModel itemModel) {
+        if (itemModel == null) {
+            return null;
+        }
+        ItemDO itemDO = new ItemDO();
+        BeanUtils.copyProperties(itemModel, itemDO);
+        // itemModel中的price是BigDecimal，而itemDO中的price是Double，因此不会被BeanUtils所copy
+        itemDO.setPrice(itemModel.getPrice().doubleValue());
+        return itemDO;
+    }
+
+    private ItemStockDO convertItemStockDOFromItemModel(ItemModel itemModel) {
+        if (itemModel == null) {
+            return null;
+        }
+        ItemStockDO itemStockDO = new ItemStockDO();
+        itemStockDO.setItemId(itemModel.getId());
+        itemStockDO.setStock(itemModel.getStock());
+        return itemStockDO;
+    }
+
+    private ItemModel convertModelFromDataObject(ItemDO itemDO, ItemStockDO itemStockDO) {
+        ItemModel itemModel = new ItemModel();
+        BeanUtils.copyProperties(itemDO, itemModel);
+        // 同样的，把DO中的Double的price转化为model中的BigDecimal的price
+        itemModel.setPrice(new BigDecimal(itemDO.getPrice()));
+        itemModel.setStock(itemStockDO.getStock());
+        return itemModel;
+    }
+
+}
