@@ -1,6 +1,7 @@
 package com.yifan.lightning.deal.dao;
 
 import com.yifan.lightning.deal.dataobject.ItemStockDO;
+import org.apache.ibatis.annotations.Param;
 
 public interface ItemStockDOMapper {
     /**
@@ -53,5 +54,8 @@ public interface ItemStockDOMapper {
 
     // 使用商品id查找对应库存
     ItemStockDO selectByItemId(Integer itemId);
+
+    // 减库存操作，返回值int是受影响的行数
+    int decreaseStock(@Param("itemId") Integer itemId, @Param("amount") Integer amount);
 
 }

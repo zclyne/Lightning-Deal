@@ -24,6 +24,63 @@ public class ItemVO {
     // 描述图片url
     private String imgUrl;
 
+    // 秒杀活动的信息
+    // 记录商品是否在秒杀活动中，及对应的状态
+    // 1: 活动待开始；2: 活动进行中；3: 没有活动
+    private Integer promoStatus;
+
+    // 秒杀活动价格
+    private BigDecimal promoPrice;
+
+    // 秒杀活动id
+    private Integer promoId;
+
+    // 秒杀活动开始时间
+    private String startDate;
+
+    // 秒杀活动结束时间
+    private String endDate;
+
+    public Integer getPromoStatus() {
+        return promoStatus;
+    }
+
+    public void setPromoStatus(Integer promoStatus) {
+        this.promoStatus = promoStatus;
+    }
+
+    public BigDecimal getPromoPrice() {
+        return promoPrice;
+    }
+
+    public void setPromoPrice(BigDecimal promoPrice) {
+        this.promoPrice = promoPrice;
+    }
+
+    public Integer getPromoId() {
+        return promoId;
+    }
+
+    public void setPromoId(Integer promoId) {
+        this.promoId = promoId;
+    }
+
+    public String getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(String startDate) {
+        this.startDate = startDate;
+    }
+
+    public String getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(String endDate) {
+        this.endDate = endDate;
+    }
+
     public Integer getId() {
         return id;
     }

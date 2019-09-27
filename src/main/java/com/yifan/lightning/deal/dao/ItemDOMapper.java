@@ -1,6 +1,7 @@
 package com.yifan.lightning.deal.dao;
 
 import com.yifan.lightning.deal.dataobject.ItemDO;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -55,5 +56,8 @@ public interface ItemDOMapper {
 
     // 商品列表
     List<ItemDO> listItem();
+
+    // 商品销量增加
+    void increaseSales(@Param("id") Integer id, @Param("amount") Integer amount);
 
 }

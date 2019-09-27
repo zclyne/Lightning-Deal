@@ -1,5 +1,7 @@
 package com.yifan.lightning.deal.dataobject;
 
+import org.apache.ibatis.annotations.Param;
+
 public class ItemStockDO {
     /**
      *

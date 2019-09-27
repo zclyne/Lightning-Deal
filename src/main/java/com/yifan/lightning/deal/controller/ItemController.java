@@ -5,6 +5,7 @@ import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.response.CommonReturnType;
 import com.yifan.lightning.deal.service.ItemService;
 import com.yifan.lightning.deal.service.model.ItemModel;
+import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -67,6 +68,15 @@ public class ItemController extends BaseController {
     private ItemVO convertVOFromModel(ItemModel itemModel) {
         ItemVO itemVO = new ItemVO();
         BeanUtils.copyProperties(itemModel, itemVO);
+        if (itemModel.getPromoModel() != null) { // 商品有正在进行或即将开始的秒杀活动
+            itemVO.setPromoStatus(itemModel.getPromoModel().getStatus());
+            itemVO.setPromoId(itemModel.getPromoModel().getId());
+            itemVO.setPromoPrice(itemModel.getPromoModel().getPromoItemPrice());
+            itemVO.setStartDate(itemModel.getPromoModel().getStartDate().toString(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")));
+            itemVO.setEndDate(itemModel.getPromoModel().getEndDate().toString(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")));
+        } else { // 没有秒杀活动
+            itemVO.setPromoStatus(3);
+        }
         return itemVO;
     }
 

@@ -7,7 +7,9 @@ import com.yifan.lightning.deal.dataobject.ItemStockDO;
 import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.error.EnumBusinessError;
 import com.yifan.lightning.deal.service.ItemService;
+import com.yifan.lightning.deal.service.PromoService;
 import com.yifan.lightning.deal.service.model.ItemModel;
+import com.yifan.lightning.deal.service.model.PromoModel;
 import com.yifan.lightning.deal.validator.ValidationResult;
 import com.yifan.lightning.deal.validator.ValidatorImpl;
 import org.springframework.beans.BeanUtils;
@@ -30,6 +32,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private ItemStockDOMapper itemStockDOMapper;
+
+    @Autowired
+    private PromoService promoService;
 
     @Override
     @Transactional
@@ -79,7 +84,34 @@ public class ItemServiceImpl implements ItemService {
         // 将DO转化为model
         ItemModel itemModel = convertModelFromDataObject(itemDO, itemStockDO);
 
+        // 获取秒杀活动商品信息
+        PromoModel promoModel = promoService.getPromoByItemId(itemModel.getId());
+        if (promoModel != null && promoModel.getStatus().intValue() != 3) { // 商品存在正在进行或还未开始的秒杀活动
+            itemModel.setPromoModel(promoModel);
+        }
+
         return itemModel;
+    }
+
+    // 减库存操作必须保证原子性，所以要加上@Transactional
+    // 该操作只需要修改item_stock表而不影响item_info表，体现出了先前把stock单独建表的好处
+    @Override
+    @Transactional
+    public boolean decreaseStock(Integer itemId, Integer amount) throws BusinessException {
+        // 这里把判断库存是否比amount多的操作放在sql语句的where中，而不是先取出item后再通过java来判断
+        // 因此只需要一次数据库访问操作，性能更好
+        int affectedRow = itemStockDOMapper.decreaseStock(itemId, amount);
+        if (affectedRow > 0) { // 更新库存成功
+            return true;
+        }
+        return false; // 更新库存失败
+    }
+
+    // 商品销量增加，需要保证原子性，加@Transactional
+    @Override
+    @Transactional
+    public void increaseSales(Integer itemId, Integer amount) throws BusinessException {
+        itemDOMapper.increaseSales(itemId, amount);
     }
 
     private ItemDO convertItemDOFromItemModel(ItemModel itemModel) {
