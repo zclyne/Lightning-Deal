@@ -65,6 +65,16 @@
       <artifactId>joda-time</artifactId>
       <version>2.9.1</version>
     </dependency>
+    <!-- redis相关 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.session</groupId>
+      <artifactId>spring-session-data-redis</artifactId>
+      <version>2.1.6.RELEASE</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -154,6 +164,11 @@
           <source>8</source>
           <target>8</target>
         </configuration>
+      </plugin>
+      <!-- maven打包的plugin，若不加则mvn clean package生成的jar包无法正常执行 -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

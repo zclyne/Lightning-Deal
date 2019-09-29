@@ -6,6 +6,7 @@
     <link href="static/assets/global/css/components.css" rel="stylesheet" type="text/css" />
     <link href="static/assets/admin/pages/css/login.css" rel="stylesheet" type="text/css" />
     <script src="static/assets/global/plugins/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="./get-host.js" type="text/javascript"></script>
 </head>
 <body class="login">
 <div class="content">
@@ -50,7 +51,7 @@
             $.ajax({
                 type: "POST",
                 content: "application/x-www-form-urlencoded",
-                url: "http://localhost:8081/user/login/",
+                url: g_host + "/user/login/",
                 data: {
                     "telphone": telphone,
                     "password": password
@@ -61,6 +62,10 @@
                 success: function(data) {
                     if (data.status === "success") {
                         alert("登录成功！");
+                        // 从返回的data中获取到token并保存在localStorage中
+                        // localStorage是Html5中的新特性，比cookie更安全，且容量更大
+                        var token = data.data;
+                        window.localStorage["token"] = token;
                         // 跳转到商品列表页
                         window.location.href="./list-item.html";
                     } else {

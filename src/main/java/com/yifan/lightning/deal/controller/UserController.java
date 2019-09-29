@@ -10,12 +10,15 @@ import com.yifan.lightning.deal.service.model.UserModel;
 import org.apache.tomcat.util.security.MD5Encoder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.security.MessageDigest;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @RestController("user")
 @RequestMapping("/user")
@@ -32,6 +35,10 @@ public class UserController extends BaseController {
     @Autowired
     private HttpServletRequest httpServletRequest;
 
+    // redis template，是嵌入在spring boot中的redis的bean
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     // 用户登录接口
     @RequestMapping(value = "/login", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
     public CommonReturnType login(@RequestParam(name = "telphone") String telphone,
@@ -44,10 +51,26 @@ public class UserController extends BaseController {
         // 用户登录服务
         UserModel userModel = userService.validateLogin(telphone, DigestUtils.md5DigestAsHex(password.getBytes()));
         // 将登陆凭证加入到用户登陆成功的session内
-        this.httpServletRequest.getSession().setAttribute("IS_LOGIN", true);
-        this.httpServletRequest.getSession().setAttribute("LOGIN_USER", userModel);
+        // 在使用了redis后，这里会默认放到redis内
+        // 但是此处要把UserModel实现Serializable接口，否则会报错。因为redis使用的是jdk的序列化方式
+        // 或者把redis的序列化方式更改为json
+//        this.httpServletRequest.getSession().setAttribute("IS_LOGIN", true);
+//        this.httpServletRequest.getSession().setAttribute("LOGIN_USER", userModel);
+//        return CommonReturnType.create(null);
 
-        return CommonReturnType.create(null);
+        // 修改：若用户登录验证成功，将对应的登录信息和登录token一起存入redis中
+        // 生成token，用UUID的方式，必须保证唯一性
+        String uuidToken = UUID.randomUUID().toString();
+        // 直接生成的uuid中会有"-"，对于url传输来说不友好，因此要把它替换为空
+        uuidToken = uuidToken.replace("-", "");
+        // 建立token和用户登录态之间的联系，key是uuid，value是userModel
+        // 只要redis中存在用户对应的uuid，就认为该用户是登录态
+        redisTemplate.opsForValue().set(uuidToken, userModel);
+        // 超时时间设为1小时
+        redisTemplate.expire(uuidToken, 1, TimeUnit.HOURS);
+
+        // 把该用户的token返回给客户端
+        return CommonReturnType.create(uuidToken);
     }
 
     // 用户注册接口
