@@ -27,6 +27,10 @@ TPS: 2334.38
 
 Average Response Time: 482.84
 ### 配置redis集中式缓存后：
+TPS: 2474.76
+
+Average Response Time: 473.72
+### 配置本地数据热点缓存后：
 TPS: 
 
 Average Response Time: 
