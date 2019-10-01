@@ -90,7 +90,7 @@ CREATE TABLE `order_info` (
   `item_price` double NOT NULL,
   `amount` int(11) NOT NULL DEFAULT '0',
   `order_price` double NOT NULL,
-  `promo_id` int(11) NOT NULL DEFAULT '0' COMMENT '若非0，表示是秒杀时下单',
+  `promo_id` int(11) DEFAULT '0' COMMENT '若非0，表示是秒杀时下单',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;

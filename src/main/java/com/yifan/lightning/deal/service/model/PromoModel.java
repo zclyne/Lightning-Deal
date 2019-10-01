@@ -2,10 +2,11 @@ package com.yifan.lightning.deal.service.model;
 
 import org.joda.time.DateTime;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 // 秒杀活动领域模型
-public class PromoModel {
+public class PromoModel implements Serializable {
 
     private Integer id;
 

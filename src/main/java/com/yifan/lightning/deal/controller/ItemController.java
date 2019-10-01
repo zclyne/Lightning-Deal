@@ -8,10 +8,12 @@ import com.yifan.lightning.deal.service.model.ItemModel;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @RestController("item")
@@ -21,6 +23,9 @@ public class ItemController extends BaseController {
 
     @Autowired
     private ItemService itemService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     // 创建商品接口
     @RequestMapping(value = "/create", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
@@ -47,7 +52,17 @@ public class ItemController extends BaseController {
     // 商品详情页浏览
     @RequestMapping(value = "/get", method = {RequestMethod.GET})
     public CommonReturnType getItem(@RequestParam(name = "id") Integer id) {
-        ItemModel itemModel = itemService.getItemById(id);
+        // 在controller层引入redis缓存，减少对数据库的访问操作
+        // 根据商品id到redis中获取
+        ItemModel itemModel = (ItemModel) redisTemplate.opsForValue().get("item_" + id);
+        // 若redis中不存在对应的itemModel，则访问下游service
+        if (itemModel == null) {
+            itemModel = itemService.getItemById(id);
+            // 把itemModel存入redis中
+            redisTemplate.opsForValue().set("item_" + id, itemModel);
+            // 设置失效时间为10分钟
+            redisTemplate.expire("item_" + id, 10, TimeUnit.MINUTES);
+        }
         ItemVO itemVO = convertVOFromModel(itemModel);
         return CommonReturnType.create(itemVO);
     }
