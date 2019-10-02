@@ -14,11 +14,13 @@ import com.yifan.lightning.deal.validator.ValidationResult;
 import com.yifan.lightning.deal.validator.ValidatorImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +37,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private PromoService promoService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @Override
     @Transactional
@@ -90,6 +95,19 @@ public class ItemServiceImpl implements ItemService {
             itemModel.setPromoModel(promoModel);
         }
 
+        return itemModel;
+    }
+
+    // 从redis缓存中获取商品及其秒杀活动信息
+    @Override
+    public ItemModel getItemByIdInCache(Integer id) {
+        ItemModel itemModel = (ItemModel) redisTemplate.opsForValue().get("item_validate_" + id);
+        if (itemModel == null) { // 若redis缓存中不存在该商品信息，查数据库
+            itemModel = this.getItemById(id);
+            redisTemplate.opsForValue().set("item_validate_" + id, itemModel);
+            // 设置有效时间为10分钟
+            redisTemplate.expire("item_validate_" + id, 10, TimeUnit.MINUTES);
+        }
         return itemModel;
     }
 

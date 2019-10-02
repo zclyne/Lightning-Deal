@@ -20,12 +20,12 @@ Apache Jmeter
 
 服务器端：Nginx + Tomcat集群
 
-## 并发优化方向
+## 性能优化策略
 
 1. 采用Tomcat集群，配置Nginx反向代理与负载均衡，使流量被均匀分摊给Tomcat服务器
 2. Nginx配置动静分离，进一步减小Tomcat服务器压力
 3. 使用Redis对商品详情页做缓存，降低MySQL数据库访问次数
-4. 配置本地热点缓存 + Nginx代理缓存
+4. 使用Guava Cache配置本地热点缓存
 
 ## 当前优化结果
 

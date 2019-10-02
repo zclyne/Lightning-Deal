@@ -3,6 +3,7 @@ package com.yifan.lightning.deal.controller;
 import com.yifan.lightning.deal.controller.viewobject.ItemVO;
 import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.response.CommonReturnType;
+import com.yifan.lightning.deal.service.CacheService;
 import com.yifan.lightning.deal.service.ItemService;
 import com.yifan.lightning.deal.service.model.ItemModel;
 import org.joda.time.format.DateTimeFormat;
@@ -26,6 +27,9 @@ public class ItemController extends BaseController {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private CacheService cacheService;
 
     // 创建商品接口
     @RequestMapping(value = "/create", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
@@ -52,17 +56,25 @@ public class ItemController extends BaseController {
     // 商品详情页浏览
     @RequestMapping(value = "/get", method = {RequestMethod.GET})
     public CommonReturnType getItem(@RequestParam(name = "id") Integer id) {
-        // 在controller层引入redis缓存，减少对数据库的访问操作
-        // 根据商品id到redis中获取
-        ItemModel itemModel = (ItemModel) redisTemplate.opsForValue().get("item_" + id);
-        // 若redis中不存在对应的itemModel，则访问下游service
-        if (itemModel == null) {
-            itemModel = itemService.getItemById(id);
-            // 把itemModel存入redis中
-            redisTemplate.opsForValue().set("item_" + id, itemModel);
-            // 设置失效时间为10分钟
-            redisTemplate.expire("item_" + id, 10, TimeUnit.MINUTES);
+        // 此处使用多级缓存，顺序为本地热点缓存 -> redis缓存 -> 数据库
+        ItemModel itemModel = null;
+
+        // 取本地缓存
+        itemModel = (ItemModel) cacheService.getFromCommonCache("item_" + id);
+        if (itemModel == null) { // 商品不存在于本地缓存中，查redis缓存
+            // 根据商品id到redis中获取
+            itemModel = (ItemModel) redisTemplate.opsForValue().get("item_" + id);
+            if (itemModel == null) { // 商品不存在于redis中，访问数据库
+                itemModel = itemService.getItemById(id);
+                // 把itemModel存入redis中
+                redisTemplate.opsForValue().set("item_" + id, itemModel);
+                // 设置失效时间为10分钟
+                redisTemplate.expire("item_" + id, 10, TimeUnit.MINUTES);
+            }
+            // 将商品设置到本地缓存中
+            cacheService.setCommonCache("item_" + id, itemModel);
         }
+
         ItemVO itemVO = convertVOFromModel(itemModel);
         return CommonReturnType.create(itemVO);
     }

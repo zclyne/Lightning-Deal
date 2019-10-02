@@ -41,11 +41,15 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderModel createOrder(Integer userId, Integer itemId, Integer promoId, Integer amount) throws BusinessException {
         // 校验下单状态：商品是否存在、用户是否合法、购买数量是否正确、秒杀活动信息是否正确
-        ItemModel itemModel = itemService.getItemById(itemId);
+        // ItemModel itemModel = itemService.getItemById(itemId);
+        // 从redis中获取商品信息
+        ItemModel itemModel = itemService.getItemByIdInCache(itemId);
         if (itemModel == null) {
             throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "商品不存在");
         }
-        UserModel userModel = userService.getUserById(userId);
+        // UserModel userModel = userService.getUserById(userId);
+        // 从redis中获取用户信息
+        UserModel userModel = userService.getUserByIdInCache(userId);
         if (userModel == null) {
             throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "用户不存在");
         }
