@@ -5,6 +5,7 @@ import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.response.CommonReturnType;
 import com.yifan.lightning.deal.service.CacheService;
 import com.yifan.lightning.deal.service.ItemService;
+import com.yifan.lightning.deal.service.PromoService;
 import com.yifan.lightning.deal.service.model.ItemModel;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.BeanUtils;
@@ -30,6 +31,9 @@ public class ItemController extends BaseController {
 
     @Autowired
     private CacheService cacheService;
+
+    @Autowired
+    private PromoService promoService;
 
     // 创建商品接口
     @RequestMapping(value = "/create", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
@@ -90,6 +94,13 @@ public class ItemController extends BaseController {
             return itemVO;
         }).collect(Collectors.toList());
         return CommonReturnType.create(itemVOList);
+    }
+
+    // 发布秒杀活动
+    @RequestMapping(value = "/publishpromo")
+    public CommonReturnType publishPromo(@RequestParam(name = "id") Integer id) {
+        promoService.publicPromo(id);
+        return CommonReturnType.create(null);
     }
 
     private ItemVO convertVOFromModel(ItemModel itemModel) {

@@ -13,7 +13,8 @@ public enum EnumBusinessError implements CommonError {
     USER_LOGIN_FAIL(20002, "用户手机号或密码不正确"),
     USER_NOT_LOGIN(20003, "用户未登录"),
     // 30000开头为交易信息错误定义
-    STOCK_NOT_ENOUGH(30001, "库存不足")
+    STOCK_NOT_ENOUGH(30001, "库存不足"),
+    MQ_SEND_FAIL(30002, "库存异步消息失败")
     // 若后续有新的错误，只需在下面新增
     ;
 

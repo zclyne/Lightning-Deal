@@ -2,6 +2,7 @@ package com.yifan.lightning.deal.controller;
 
 import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.error.EnumBusinessError;
+import com.yifan.lightning.deal.mq.MqProducer;
 import com.yifan.lightning.deal.response.CommonReturnType;
 import com.yifan.lightning.deal.service.OrderService;
 import com.yifan.lightning.deal.service.model.OrderModel;
@@ -26,6 +27,9 @@ public class OrderController extends BaseController {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private MqProducer mqProducer;
 
     // 下单请求接口
     @RequestMapping(value = "/createorder", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
@@ -53,10 +57,16 @@ public class OrderController extends BaseController {
             throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
         }
 
-        // 创建订单
-        OrderModel orderModel = orderService.createOrder(userModel.getId(), itemId, promoId, amount);
+        // 加入库存流水init状态
 
-        return CommonReturnType.create(orderModel);
+
+        // 通过事务型消息创建订单
+        // OrderModel orderModel = orderService.createOrder(userModel.getId(), itemId, promoId, amount);
+        if (!mqProducer.transactionAsyncReduceStock(userModel.getId(), itemId, promoId, amount)) { // 如果下单失败
+            throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR, "下单失败");
+        }
+
+        return CommonReturnType.create(null);
 
     }
 

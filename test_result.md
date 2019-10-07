@@ -69,7 +69,7 @@ TPS: 651.72
 
 Average Response Time: 1976.15
 ### 使用Redis缓存进行交易验证优化后：
-TPS: 
+TPS: 1284.18
  
-Average Response Time: 
+Average Response Time: 1161.04
 ### 

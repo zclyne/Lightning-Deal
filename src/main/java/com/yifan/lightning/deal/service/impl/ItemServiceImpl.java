@@ -6,12 +6,17 @@ import com.yifan.lightning.deal.dataobject.ItemDO;
 import com.yifan.lightning.deal.dataobject.ItemStockDO;
 import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.error.EnumBusinessError;
+import com.yifan.lightning.deal.mq.MqProducer;
 import com.yifan.lightning.deal.service.ItemService;
 import com.yifan.lightning.deal.service.PromoService;
 import com.yifan.lightning.deal.service.model.ItemModel;
 import com.yifan.lightning.deal.service.model.PromoModel;
 import com.yifan.lightning.deal.validator.ValidationResult;
 import com.yifan.lightning.deal.validator.ValidatorImpl;
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -40,6 +45,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private MqProducer mqProducer;
 
     @Override
     @Transactional
@@ -118,11 +126,35 @@ public class ItemServiceImpl implements ItemService {
     public boolean decreaseStock(Integer itemId, Integer amount) throws BusinessException {
         // 这里把判断库存是否比amount多的操作放在sql语句的where中，而不是先取出item后再通过java来判断
         // 因此只需要一次数据库访问操作，性能更好
-        int affectedRow = itemStockDOMapper.decreaseStock(itemId, amount);
-        if (affectedRow > 0) { // 更新库存成功
+//        int affectedRow = itemStockDOMapper.decreaseStock(itemId, amount);
+//        if (affectedRow > 0) { // 更新库存成功
+//            return true;
+//        }
+//        return false; // 更新库存失败
+
+        // 从redis缓存中减库存，redis的减法就是increment方法且第二个参数为负数，返回的result为剩下的数字
+        long result = redisTemplate.opsForValue().increment("promo_item_stock_" + itemId, amount.intValue() * (-1));
+        if (result >= 0) { // 所剩的库存数仍然大于等于0，更新库存成功
             return true;
+        } else { // 更新库存失败，把库存补回去
+            increaseStock(itemId, amount);
+            return false;
         }
-        return false; // 更新库存失败
+    }
+
+    // 异步更新库存
+    @Override
+    public boolean asyncDecreaseStock(Integer itemId, Integer amount) {
+        // 发送扣减库存消息，如果扣减失败，要把redis中的库存加回去
+        boolean mqResult = mqProducer.asyncReduceStock(itemId, amount);
+        return mqResult;
+    }
+
+    // 库存回滚，把redis中的库存加回去，固定返回true
+    @Override
+    public boolean increaseStock(Integer itemId, Integer amount) {
+        redisTemplate.opsForValue().increment("promo_item_stock_" + itemId, amount.intValue());
+        return true;
     }
 
     // 商品销量增加，需要保证原子性，加@Transactional
@@ -130,6 +162,12 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     public void increaseSales(Integer itemId, Integer amount) throws BusinessException {
         itemDOMapper.increaseSales(itemId, amount);
+    }
+
+    // 库存流水初始化状态
+    @Override
+    public void initStockLog(Integer itemId, Integer amount) {
+
     }
 
     private ItemDO convertItemDOFromItemModel(ItemModel itemModel) {

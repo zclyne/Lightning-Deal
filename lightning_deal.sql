@@ -23,6 +23,15 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/ `lightning_deal` /*!40100 DEFAULT CHARA
 
 USE `lightning_deal`;
 
+-- Add by Yifan
+DROP TABLE IF EXISTS `stock_log`;
+CREATE TABLE `lightning_deal`.`stock_log`  (
+  `stock_log_id` varchar(64) NOT NULL COMMENT '记录唯一的库存流水',
+  `item_id` int(0) NOT NULL,
+  `amount` int(0) NOT NULL,
+  PRIMARY KEY (`stock_log_id`)
+);
+
 --
 -- Table structure for table `item`
 --
