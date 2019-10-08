@@ -47,30 +47,33 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderModel createOrder(Integer userId, Integer itemId, Integer promoId, Integer amount, String stockLogId) throws BusinessException {
-        // 校验下单状态：商品是否存在、用户是否合法、购买数量是否正确、秒杀活动信息是否正确
-        // ItemModel itemModel = itemService.getItemById(itemId);
+        // 校验下单状态：购买数量是否正确、秒杀活动信息是否正确
+//        // UserModel userModel = userService.getUserById(userId);
+//        // 从redis中获取用户信息
+//        UserModel userModel = userService.getUserByIdInCache(userId);
+//        if (userModel == null) {
+//            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "用户不存在");
+//        }
+
         // 从redis中获取商品信息
         ItemModel itemModel = itemService.getItemByIdInCache(itemId);
         if (itemModel == null) {
             throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "商品不存在");
         }
-        // UserModel userModel = userService.getUserById(userId);
-        // 从redis中获取用户信息
-        UserModel userModel = userService.getUserByIdInCache(userId);
-        if (userModel == null) {
-            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "用户不存在");
-        }
+
+        // 校验购买数量
         if (amount <= 0 || amount > 99) {
             throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "购买数量不合法");
         }
-        if (promoId != null) { // 存在秒杀活动
-            // 校验秒杀活动和商品是否对应
-            if (promoId.intValue() != itemModel.getPromoModel().getId()) {
-                throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "秒杀活动信息不正确");
-            } else if (itemModel.getPromoModel().getStatus() != 2) { // 校验秒杀活动是否正在进行中
-                throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "秒杀活动还未开始");
-            }
-        }
+
+//        if (promoId != null) { // 存在秒杀活动
+//            // 校验秒杀活动和商品是否对应
+//            if (promoId.intValue() != itemModel.getPromoModel().getId()) {
+//                throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "秒杀活动信息不正确");
+//            } else if (itemModel.getPromoModel().getStatus() != 2) { // 校验秒杀活动是否正在进行中
+//                throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "秒杀活动还未开始");
+//            }
+//        }
 
         // 落单减库存。另一种方法是支付减库存，但有可能出现超卖现象，所以此处使用落单减库存
         boolean result = itemService.decreaseStock(itemId, amount);
