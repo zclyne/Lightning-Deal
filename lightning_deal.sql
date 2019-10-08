@@ -32,6 +32,9 @@ CREATE TABLE `lightning_deal`.`stock_log`  (
   PRIMARY KEY (`stock_log_id`)
 );
 
+ALTER TABLE `lightning_deal`.`stock_log`
+ADD COLUMN `status` int(0) NOT NULL COMMENT '1表示初始状态，2表示下单扣减库存成功，3表示下单回滚' AFTER `amount`;
+
 --
 -- Table structure for table `item`
 --

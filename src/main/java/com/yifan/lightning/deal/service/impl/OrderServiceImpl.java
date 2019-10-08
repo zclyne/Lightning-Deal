@@ -2,8 +2,10 @@ package com.yifan.lightning.deal.service.impl;
 
 import com.yifan.lightning.deal.dao.OrderDOMapper;
 import com.yifan.lightning.deal.dao.SequenceDOMapper;
+import com.yifan.lightning.deal.dao.StockLogDOMapper;
 import com.yifan.lightning.deal.dataobject.OrderDO;
 import com.yifan.lightning.deal.dataobject.SequenceDO;
+import com.yifan.lightning.deal.dataobject.StockLogDO;
 import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.error.EnumBusinessError;
 import com.yifan.lightning.deal.service.ItemService;
@@ -39,9 +41,12 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private SequenceDOMapper sequenceDOMapper;
 
+    @Autowired
+    private StockLogDOMapper stockLogDOMapper;
+
     @Override
     @Transactional
-    public OrderModel createOrder(Integer userId, Integer itemId, Integer promoId, Integer amount) throws BusinessException {
+    public OrderModel createOrder(Integer userId, Integer itemId, Integer promoId, Integer amount, String stockLogId) throws BusinessException {
         // 校验下单状态：商品是否存在、用户是否合法、购买数量是否正确、秒杀活动信息是否正确
         // ItemModel itemModel = itemService.getItemById(itemId);
         // 从redis中获取商品信息
@@ -95,6 +100,14 @@ public class OrderServiceImpl implements OrderService {
 
         // 商品销量增加
         itemService.increaseSales(itemId, amount);
+
+        // 设置库存流水状态为成功
+        StockLogDO stockLogDO = stockLogDOMapper.selectByPrimaryKey(stockLogId);
+        if (stockLogDO == null) { // 这种情况理论上不存在
+            throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR);
+        }
+        stockLogDO.setStatus(2); // 状态2表示下单扣减库存成功
+        stockLogDOMapper.updateByPrimaryKeySelective(stockLogDO);
 
         // 因为已经使用了RocketMQ的事务型消息，所以这里不再需要处理关于数据库库存的任何内容
 //        // spring boot的transaction事务在最后一起commit，而commit过程仍有可能因为网络不通畅的原因失败

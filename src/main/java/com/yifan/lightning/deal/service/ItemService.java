@@ -31,7 +31,7 @@ public interface ItemService {
     // 商品销量增加
     void increaseSales(Integer itemId, Integer amount) throws BusinessException;
 
-    // 初始化库存流水
-    void initStockLog(Integer itemId, Integer amount);
+    // 初始化库存流水，返回值是库存流水id
+    String initStockLog(Integer itemId, Integer amount);
 
 }

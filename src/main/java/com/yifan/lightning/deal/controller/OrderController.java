@@ -4,6 +4,7 @@ import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.error.EnumBusinessError;
 import com.yifan.lightning.deal.mq.MqProducer;
 import com.yifan.lightning.deal.response.CommonReturnType;
+import com.yifan.lightning.deal.service.ItemService;
 import com.yifan.lightning.deal.service.OrderService;
 import com.yifan.lightning.deal.service.model.OrderModel;
 import com.yifan.lightning.deal.service.model.UserModel;
@@ -21,6 +22,9 @@ public class OrderController extends BaseController {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private ItemService itemService;
 
     @Autowired
     private HttpServletRequest httpServletRequest;
@@ -57,12 +61,19 @@ public class OrderController extends BaseController {
             throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
         }
 
-        // 加入库存流水init状态
+        // 判断商品是否售罄，若售罄标识存在，则直接返回下单失败
+        if (redisTemplate.hasKey("promo_item_stock_invalid_" + itemId)) {
+            throw new BusinessException(EnumBusinessError.STOCK_NOT_ENOUGH);
+        }
 
+        // 加入库存流水init状态
+        String stockLogId = itemService.initStockLog(itemId, amount);
 
         // 通过事务型消息创建订单
         // OrderModel orderModel = orderService.createOrder(userModel.getId(), itemId, promoId, amount);
-        if (!mqProducer.transactionAsyncReduceStock(userModel.getId(), itemId, promoId, amount)) { // 如果下单失败
+        // 参数中要传入库存流水id，用户消息队列来定期检查消息状态
+        if (!mqProducer.transactionAsyncReduceStock(userModel.getId(), itemId, promoId, amount, stockLogId)) {
+            // 如果下单失败，抛出异常
             throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR, "下单失败");
         }
 

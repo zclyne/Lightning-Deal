@@ -2,8 +2,10 @@ package com.yifan.lightning.deal.service.impl;
 
 import com.yifan.lightning.deal.dao.ItemDOMapper;
 import com.yifan.lightning.deal.dao.ItemStockDOMapper;
+import com.yifan.lightning.deal.dao.StockLogDOMapper;
 import com.yifan.lightning.deal.dataobject.ItemDO;
 import com.yifan.lightning.deal.dataobject.ItemStockDO;
+import com.yifan.lightning.deal.dataobject.StockLogDO;
 import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.error.EnumBusinessError;
 import com.yifan.lightning.deal.mq.MqProducer;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -39,6 +42,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private ItemStockDOMapper itemStockDOMapper;
+
+    @Autowired
+    private StockLogDOMapper stockLogDOMapper;
 
     @Autowired
     private PromoService promoService;
@@ -134,7 +140,11 @@ public class ItemServiceImpl implements ItemService {
 
         // 从redis缓存中减库存，redis的减法就是increment方法且第二个参数为负数，返回的result为剩下的数字
         long result = redisTemplate.opsForValue().increment("promo_item_stock_" + itemId, amount.intValue() * (-1));
-        if (result >= 0) { // 所剩的库存数仍然大于等于0，更新库存成功
+        if (result > 0) { // 所剩的库存数仍然大于0，更新库存成功
+            return true;
+        } else if (result == 0) { // 更新成功，但是此时商品售罄
+            // 打上售罄标识
+            redisTemplate.opsForValue().set("promo_item_stock_invalid_" + itemId, "true");
             return true;
         } else { // 更新库存失败，把库存补回去
             increaseStock(itemId, amount);
@@ -164,10 +174,21 @@ public class ItemServiceImpl implements ItemService {
         itemDOMapper.increaseSales(itemId, amount);
     }
 
-    // 库存流水初始化状态
+    // 库存流水初始化状态，在下单之前调用
     @Override
-    public void initStockLog(Integer itemId, Integer amount) {
+    @Transactional
+    public String initStockLog(Integer itemId, Integer amount) {
+        StockLogDO stockLogDO = new StockLogDO();
+        stockLogDO.setItemId(itemId);
+        stockLogDO.setAmount(amount);
+        // 生成主键id
+        stockLogDO.setStockLogId(UUID.randomUUID().toString().replace("-", ""));
+        // 设置状态为1，表示初始状态
+        stockLogDO.setStatus(1);
+        // 存入数据库
+        stockLogDOMapper.insertSelective(stockLogDO);
 
+        return stockLogDO.getStockLogId();
     }
 
     private ItemDO convertItemDOFromItemModel(ItemModel itemModel) {
