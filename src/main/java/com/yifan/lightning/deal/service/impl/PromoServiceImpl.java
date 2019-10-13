@@ -68,6 +68,9 @@ public class PromoServiceImpl implements PromoService {
         ItemModel itemModel = itemService.getItemById(promoDO.getItemId());
         // 将库存同步到redis内
         redisTemplate.opsForValue().set("promo_item_stock_" + itemModel.getId(), itemModel.getStock());
+
+        // 将大闸限制数字设置到redis内，允许的令牌数为库存数量的5倍
+        redisTemplate.opsForValue().set("promo_door_count_" + promoId, itemModel.getStock().intValue() * 5);
     }
 
     @Override
@@ -104,6 +107,13 @@ public class PromoServiceImpl implements PromoService {
         // 从redis中获取用户信息
         UserModel userModel = userService.getUserByIdInCache(userId);
         if (userModel == null) {
+            return null;
+        }
+
+        // 获取秒杀大闸的count数量，用于判断是否还能发放令牌
+        long result = redisTemplate.opsForValue().increment("promo_door_count_" + promoId, -1); // 令牌数-1
+        if (result < 0) { // 不能发放令牌
+            redisTemplate.opsForValue().increment("promo_door_count_" + promoId, 1); // 把预扣除的令牌还回去
             return null;
         }
 

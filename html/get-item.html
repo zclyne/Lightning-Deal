@@ -90,11 +90,9 @@
             }
             $.ajax({
                 type: "POST",
-                // 把token添加在url中。这里虽然是POST，但是这种操作完全合法
-                url: g_host + "/order/createorder?token=" + token,
+                url: g_host + "/order/generatetoken?token=" + token,
                 data: {
                     "itemId": g_itemVO.id,
-                    "amount": 1,
                     "promoId": g_itemVO.promoId
                 },
                 xhrFields: {
@@ -102,21 +100,50 @@
                 },
                 success: function(data) {
                     if (data.status === "success") {
-                        alert("下单成功！");
-                        // 刷新页面，看到销量和库存的变化
-                        window.location.reload();
+                        var promoToken = data.data;
+                        // 使用秒杀活动令牌来下单
+                        $.ajax({
+                            type: "POST",
+                            // 把token添加在url中。这里虽然是POST，但是这种操作完全合法
+                            url: g_host + "/order/createorder?token=" + token,
+                            data: {
+                                "itemId": g_itemVO.id,
+                                "amount": 1,
+                                "promoId": g_itemVO.promoId,
+                                "promoToken": promoToken
+                            },
+                            xhrFields: {
+                                withCredentials: true
+                            },
+                            success: function(data) {
+                                if (data.status === "success") {
+                                    alert("下单成功！");
+                                    // 刷新页面，看到销量和库存的变化
+                                    window.location.reload();
+                                } else {
+                                    alert("下单失败，原因为" + data.data.errMsg);
+                                    if (data.data.errCode == 20003) { // 用户未登录错误，跳转到登录页
+                                        window.location.href = "./login.html";
+                                    }
+                                }
+                            },
+                            error: function(data) {
+                                alert("下单失败，原因为" + data.responseText);
+                                if (data.data.errCode == 20003) { // 用户未登录错误，跳转到登录页
+                                    window.location.href = "./login.html";
+                                }
+                            }
+                        });
                     } else {
-                        alert("下单失败，原因为" + data.data.errMsg);
-                        if (data.data.errCode == 20003) { // 用户未登录错误，跳转到登录页
-                            window.location.href = "./login.html";
-                        }
+                        alert("获取token失败，原因为" + data.data.errMsg);
                     }
                 },
                 error: function(data) {
-                    alert("下单失败，原因为" + data.responseText);
+                    alert("获取token失败，原因为" + data.responseText);
                 }
-            });
+            })
         });
+
         // 获取商品详情
         $.ajax({
             type: "GET",

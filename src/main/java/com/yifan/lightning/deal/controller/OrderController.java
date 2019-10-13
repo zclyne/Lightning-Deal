@@ -14,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
+import java.util.concurrent.*;
 
 @RestController
 @RequestMapping("/order")
@@ -39,6 +41,15 @@ public class OrderController extends BaseController {
     @Autowired
     private MqProducer mqProducer;
 
+    private ExecutorService executorService;
+
+    // 在类构建完成后，初始化executorService
+    @PostConstruct
+    public void init() {
+        // 创建一个有20个可工作线程的线程池
+        executorService = Executors.newFixedThreadPool(20);
+    }
+
     // 生成秒杀令牌
     @RequestMapping(value = "/generatetoken", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
     public CommonReturnType generateToken(@RequestParam(name = "itemId") Integer itemId,
@@ -56,8 +67,9 @@ public class OrderController extends BaseController {
         }
         // 获取秒杀访问令牌
         String promoToken = promoService.generateSecondKillToken(promoId, itemId, userModel.getId());
-        if (promoToken == null) {
-            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "生成令牌失败");
+        if (promoToken == null) { // 没有秒杀活动，则以正常方式下单
+            // throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "生成令牌失败");
+            return CommonReturnType.create(null);
         }
 
         // 返回对应的结果
@@ -104,15 +116,38 @@ public class OrderController extends BaseController {
             throw new BusinessException(EnumBusinessError.STOCK_NOT_ENOUGH);
         }
 
-        // 加入库存流水init状态
-        String stockLogId = itemService.initStockLog(itemId, amount);
+        // 同步调用线程池的submit方法，在异步线程队列中完成库存流水、创建订单和还令牌操作
+        // 拥塞窗口大小为20，用来队列化泄洪
+        Future<Object> future = executorService.submit(new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
 
-        // 通过事务型消息创建订单
-        // OrderModel orderModel = orderService.createOrder(userModel.getId(), itemId, promoId, amount);
-        // 参数中要传入库存流水id，用户消息队列来定期检查消息状态
-        if (!mqProducer.transactionAsyncReduceStock(userModel.getId(), itemId, promoId, amount, stockLogId)) {
-            // 如果下单失败，抛出异常
-            throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR, "下单失败");
+                // 加入库存流水init状态
+                String stockLogId = itemService.initStockLog(itemId, amount);
+
+                // 通过事务型消息创建订单
+                // OrderModel orderModel = orderService.createOrder(userModel.getId(), itemId, promoId, amount);
+                // 参数中要传入库存流水id，用户消息队列来定期检查消息状态
+                if (!mqProducer.transactionAsyncReduceStock(userModel.getId(), itemId, promoId, amount, stockLogId)) {
+                    // 如果下单失败，抛出异常
+                    throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR, "下单失败");
+                }
+
+                if (promoId != null) { // 若存在秒杀活动，下单完成后，把令牌还回去
+                    redisTemplate.opsForValue().increment("promo_door_count_" + promoId, 1);
+                }
+
+                return null;
+            }
+        });
+
+        // 等待future完成
+        try {
+            future.get();
+        } catch (InterruptedException e) {
+            throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR);
+        } catch (ExecutionException e) {
+            throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR);
         }
 
         return CommonReturnType.create(null);
