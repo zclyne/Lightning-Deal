@@ -27,9 +27,9 @@
         </javaClientGenerator>
         <!-- 生成对应表及类名 -->
         <!-- 把表user_info映射为java类UserDO -->
-<!--        <table tableName="user_info" domainObjectName="UserDO" enableCountByExample="false"-->
-<!--               enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false"-->
-<!--               selectByExampleQueryId="false"></table>-->
+        <table tableName="user_info" domainObjectName="UserDO" enableCountByExample="false"
+               enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false"
+               selectByExampleQueryId="false"></table>
 <!--        <table tableName="user_password" domainObjectName="UserPasswordDO" enableCountByExample="false"-->
 <!--               enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false"-->
 <!--               selectByExampleQueryId="false"></table>-->

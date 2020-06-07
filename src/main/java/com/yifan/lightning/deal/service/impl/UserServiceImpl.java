@@ -15,6 +15,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 // service层必须返回model对象而不能直接返回do，do只是对数据库表的直接映射
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Autowired
     private UserDOMapper userDOMapper;
@@ -33,6 +36,17 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Override
+    public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
+        UserDO userDO = userDOMapper.selectByUsername(s);
+        if (userDO == null) {
+            return null;
+        }
+        int userId = userDO.getId();
+        UserPasswordDO userPasswordDO = userPasswordDOMapper.selectByUserId(userId);
+        return convertFromDataObject(userDO, userPasswordDO);
+    }
 
     @Override
     public UserModel getUserById(Integer id) {
@@ -60,7 +74,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void register(UserModel userModel) throws BusinessException {
+    public int register(UserModel userModel) throws BusinessException {
         if (userModel == null) {
             throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR);
         }
@@ -89,7 +103,7 @@ public class UserServiceImpl implements UserService {
         userModel.setId(userDO.getId());
         // 把新的user的密码插入到数据库中，同样使用selective
         UserPasswordDO userPasswordDO = convertPasswordFromModel(userModel);
-        userPasswordDOMapper.insertSelective(userPasswordDO);
+        return userPasswordDOMapper.insertSelective(userPasswordDO);
     }
 
     private UserDO convertFromModel(UserModel userModel) {
@@ -106,7 +120,7 @@ public class UserServiceImpl implements UserService {
             return null;
         }
         UserPasswordDO userPasswordDO = new UserPasswordDO();
-        userPasswordDO.setEncryptPassword(userModel.getEncryptPassword());
+        userPasswordDO.setEncryptPassword(userModel.getPassword());
         userPasswordDO.setUserId(userModel.getId());
         return userPasswordDO;
     }
@@ -120,7 +134,7 @@ public class UserServiceImpl implements UserService {
         BeanUtils.copyProperties(userDO, userModel);
         // 把密码赋给userModel
         if (userPasswordDO != null) {
-            userModel.setEncryptPassword(userPasswordDO.getEncryptPassword());
+            userModel.setPassword(userPasswordDO.getEncryptPassword());
         }
 
         return userModel;
@@ -137,7 +151,7 @@ public class UserServiceImpl implements UserService {
         UserModel userModel = convertFromDataObject(userDO, userPasswordDO);
 
         // 比对用户信息内加密的密码是否和传输进来的密码相匹配
-        if (!StringUtils.equals(encryptPassword, userModel.getEncryptPassword())) {
+        if (!StringUtils.equals(encryptPassword, userModel.getPassword())) {
             throw new BusinessException(EnumBusinessError.USER_LOGIN_FAIL);
         }
 
