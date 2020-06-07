@@ -7,17 +7,22 @@ import com.yifan.lightning.deal.error.EnumBusinessError;
 import com.yifan.lightning.deal.response.CommonReturnType;
 import com.yifan.lightning.deal.service.UserService;
 import com.yifan.lightning.deal.service.model.UserModel;
-import org.apache.tomcat.util.security.MD5Encoder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.security.MessageDigest;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @RestController("user")
@@ -39,48 +44,52 @@ public class UserController extends BaseController {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    AuthenticationManager authenticationManager;
+
     // 用户登录接口
-    @RequestMapping(value = "/login", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
-    public CommonReturnType login(@RequestParam(name = "telphone") String telphone,
-                                  @RequestParam(name = "password") String password) throws BusinessException {
-        // 入参校验
-        if (org.apache.commons.lang3.StringUtils.isEmpty(telphone)
-            || org.apache.commons.lang3.StringUtils.isEmpty(password)) {
-            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR);
-        }
-        // 用户登录服务
-        UserModel userModel = userService.validateLogin(telphone, DigestUtils.md5DigestAsHex(password.getBytes()));
-        // 将登陆凭证加入到用户登陆成功的session内
-        // 在使用了redis后，这里会默认放到redis内
-        // 但是此处要把UserModel实现Serializable接口，否则会报错。因为redis使用的是jdk的序列化方式
-        // 或者把redis的序列化方式更改为json
-//        this.httpServletRequest.getSession().setAttribute("IS_LOGIN", true);
-//        this.httpServletRequest.getSession().setAttribute("LOGIN_USER", userModel);
-//        return CommonReturnType.create(null);
-
-        // 修改：若用户登录验证成功，将对应的登录信息和登录token一起存入redis中
-        // 生成token，用UUID的方式，必须保证唯一性
-        String uuidToken = UUID.randomUUID().toString();
-        // 直接生成的uuid中会有"-"，对于url传输来说不友好，因此要把它替换为空
-        uuidToken = uuidToken.replace("-", "");
-        // 建立token和用户登录态之间的联系，key是uuid，value是userModel
-        // 只要redis中存在用户对应的uuid，就认为该用户是登录态
-        redisTemplate.opsForValue().set(uuidToken, userModel);
-        // 超时时间设为1小时
-        redisTemplate.expire(uuidToken, 1, TimeUnit.HOURS);
-
-        // 把该用户的token返回给客户端
-        return CommonReturnType.create(uuidToken);
-    }
+//    @RequestMapping(value = "/login", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
+//    public CommonReturnType login(@RequestParam(name = "telphone") String telphone,
+//                                  @RequestParam(name = "password") String password) throws BusinessException {
+//        // 入参校验
+//        if (org.apache.commons.lang3.StringUtils.isEmpty(telphone)
+//            || org.apache.commons.lang3.StringUtils.isEmpty(password)) {
+//            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR);
+//        }
+//        // 用户登录服务
+//        UserModel userModel = userService.validateLogin(telphone, DigestUtils.md5DigestAsHex(password.getBytes()));
+//        // 将登陆凭证加入到用户登陆成功的session内
+//        // 在使用了redis后，这里会默认放到redis内
+//        // 但是此处要把UserModel实现Serializable接口，否则会报错。因为redis使用的是jdk的序列化方式
+//        // 或者把redis的序列化方式更改为json
+////        this.httpServletRequest.getSession().setAttribute("IS_LOGIN", true);
+////        this.httpServletRequest.getSession().setAttribute("LOGIN_USER", userModel);
+////        return CommonReturnType.create(null);
+//
+//        // 修改：若用户登录验证成功，将对应的登录信息和登录token一起存入redis中
+//        // 生成token，用UUID的方式，必须保证唯一性
+//        String uuidToken = UUID.randomUUID().toString();
+//        // 直接生成的uuid中会有"-"，对于url传输来说不友好，因此要把它替换为空
+//        uuidToken = uuidToken.replace("-", "");
+//        // 建立token和用户登录态之间的联系，key是uuid，value是userModel
+//        // 只要redis中存在用户对应的uuid，就认为该用户是登录态
+//        redisTemplate.opsForValue().set(uuidToken, userModel);
+//        // 超时时间设为1小时
+//        redisTemplate.expire(uuidToken, 1, TimeUnit.HOURS);
+//
+//        // 把该用户的token返回给客户端
+//        return CommonReturnType.create(uuidToken);
+//    }
 
     // 用户注册接口
     @RequestMapping(value = "/register", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
     public CommonReturnType register(@RequestParam(name = "telphone") String telphone,
                                      @RequestParam(name = "otpCode") String otpCode,
-                                     @RequestParam(name = "name") String name,
+                                     @RequestParam(name = "username") String username,
                                      @RequestParam(name = "age") Integer age,
                                      @RequestParam(name = "gender") Integer gender,
-                                     @RequestParam(name = "password") String password) throws BusinessException {
+                                     @RequestParam(name = "password") String password,
+                                     HttpServletRequest request) throws BusinessException {
         // 验证手机号和对应的otpCode相符合
         String inSessionOtpCode = (String) this.httpServletRequest.getSession().getAttribute(telphone);
         if (!StringUtils.equals(otpCode, inSessionOtpCode)) { // 使用alibaba druid库中的判断String相等的方法，不需要自己判断null
@@ -88,16 +97,38 @@ public class UserController extends BaseController {
         }
         // 用户注册
         UserModel userModel = new UserModel();
-        userModel.setName(name);
+        userModel.setUsername(username);
         userModel.setGender(new Byte(String.valueOf(gender.intValue())));
         userModel.setAge(age);
         userModel.setTelphone(telphone);
-        // password是明文，要先加密后再存入数据库。这里使用Spring框架自带的DigestUtils中提供的MD5加密
-        userModel.setEncryptPassword(DigestUtils.md5DigestAsHex(password.getBytes()));
-        userModel.setRegisterMode("byphone");
+        userModel.setPassword(new BCryptPasswordEncoder().encode(password));
 
-        userService.register(userModel);
-        return CommonReturnType.create(null);
+        int result = userService.register(userModel);
+        if (result == 1) { // 注册成功
+            // 注册后自动登录
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+            authenticateUserAndSetSession(username, password, authorities, request);
+            return CommonReturnType.create("Successfully registered a new user!");
+        } else {
+            return CommonReturnType.create("Failed to register!", "fail");
+        }
+    }
+
+    // 设定已认证的user，并设置session
+    private void authenticateUserAndSetSession(String username, String password, Collection<? extends GrantedAuthority> authorities, HttpServletRequest request) {
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, password, authorities);
+
+        // generate session if one doesn't exist
+        request.getSession();
+
+        token.setDetails(new WebAuthenticationDetails(request));
+        try {
+            Authentication authenticatedUser = authenticationManager.authenticate(token);
+            SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // 用户获取otp短信接口

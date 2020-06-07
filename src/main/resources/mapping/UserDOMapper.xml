@@ -162,4 +162,11 @@
     where telphone = #{telphone,jdbcType=VARCHAR}
   </select>
   <!-- 配置keyProperty和useGeneratedKeys使得MyBatis在插入后，会自动把主键（即此处的id）回填到java对象中 -->
+
+  <select id="selectByUsername" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from user_info
+    where name = #{name,jdbcType=VARCHAR}
+  </select>
 </mapper>

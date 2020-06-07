@@ -1,15 +1,22 @@
 package com.yifan.lightning.deal.service.model;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class UserModel implements Serializable {
+public class UserModel implements Serializable, UserDetails {
     private Integer id;
     @NotBlank(message = "用户名不能为空")
-    private String name;
+    private String username;
     @NotNull(message = "性别不能为空")
     private Byte gender;
     @NotNull(message = "年龄不能为空")
@@ -21,14 +28,16 @@ public class UserModel implements Serializable {
     private String registerMode;
     private String thirdPartyId;
     @NotBlank(message = "密码不能为空")
-    private String encryptPassword;
+    private String password;
+    private String role;
 
-    public String getEncryptPassword() {
-        return encryptPassword;
+    @Override
+    public String getPassword() {
+        return password;
     }
 
-    public void setEncryptPassword(String encryptPassword) {
-        this.encryptPassword = encryptPassword;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Integer getId() {
@@ -39,12 +48,13 @@ public class UserModel implements Serializable {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public String getUsername() {
+        return username;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public Byte getGender() {
@@ -85,5 +95,40 @@ public class UserModel implements Serializable {
 
     public void setThirdPartyId(String thirdPartyId) {
         this.thirdPartyId = thirdPartyId;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(role));
+        return authorities;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 }

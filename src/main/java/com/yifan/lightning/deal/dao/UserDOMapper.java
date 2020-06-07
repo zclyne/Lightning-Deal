@@ -54,4 +54,7 @@ public interface UserDOMapper {
     // 通过手机号查找用户
     UserDO selectByTelphone(String telphone);
 
+    // 通过用户名查找用户
+    UserDO selectByUsername(String username);
+
 }

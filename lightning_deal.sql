@@ -183,6 +183,7 @@ CREATE TABLE `user_info` (
   `gender` tinyint(4) NOT NULL DEFAULT '0' COMMENT '1代表男性，2代表女性',
   `age` int(11) NOT NULL DEFAULT '0',
   `telphone` varchar(64) COLLATE utf8_bin NOT NULL DEFAULT '',
+  `role` varchar(64) COLLATE utf8_bin NOT NULL DEFAULT 'ROLE_USER',
   `register_mode` varchar(64) COLLATE utf8_bin NOT NULL COMMENT 'byphone, bywechat, byalipay',
   `third_party_id` varchar(64) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '' COMMENT '第三方注册账号id',
   PRIMARY KEY (`id`),
@@ -196,7 +197,11 @@ CREATE TABLE `user_info` (
 
 LOCK TABLES `user_info` WRITE;
 /*!40000 ALTER TABLE `user_info` DISABLE KEYS */;
-INSERT INTO `user_info` VALUES (1,'user_1',1,20,'13333333333','byphone','\'\''),(8,'user_2',2,30,'12233344445','byphone',''),(15,'user_3',1,50,'12345678901','byphone','');
+INSERT INTO `user_info`
+VALUES (1,'adam',1,20,'13333333333', 'ROLE_USER', 'byphone',''),
+       (2,'bob',2,30,'12233344445', 'ROLE_USER', 'byphone',''),
+       (3,'jerry',1,50,'12345678901', 'ROLE_USER', 'byphone',''),
+       (4,'admin',1,40,'1234564321', 'ROLE_ADMIN', 'byphone','');
 /*!40000 ALTER TABLE `user_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -209,7 +214,7 @@ DROP TABLE IF EXISTS `user_password`;
  SET character_set_client = utf8mb4 ;
 CREATE TABLE `user_password` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `encrypt_password` varchar(128) COLLATE utf8_bin NOT NULL DEFAULT '',
+  `encrypt_password` varchar(512) COLLATE utf8_bin NOT NULL DEFAULT '',
   `user_id` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
@@ -221,7 +226,10 @@ CREATE TABLE `user_password` (
 
 LOCK TABLES `user_password` WRITE;
 /*!40000 ALTER TABLE `user_password` DISABLE KEYS */;
-INSERT INTO `user_password` VALUES (1,'asdfasdf',1),(5,'63a9f0ea7bb98050796b649e85481845',8),(6,'63a9f0ea7bb98050796b649e85481845',15);
+INSERT INTO `user_password`
+VALUES (1,'$2a$10$UlM3jvBX/mKU/gkZFwzD6uP8ArPs8e6bBa9heJmIlv/YDTEoY7x8K',1),
+       (2,'$2a$10$UlM3jvBX/mKU/gkZFwzD6uP8ArPs8e6bBa9heJmIlv/YDTEoY7x8K',2),
+       (3,'$2a$10$UlM3jvBX/mKU/gkZFwzD6uP8ArPs8e6bBa9heJmIlv/YDTEoY7x8K',3);
 /*!40000 ALTER TABLE `user_password` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

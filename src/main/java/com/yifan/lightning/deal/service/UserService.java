@@ -11,7 +11,7 @@ public interface UserService {
     UserModel getUserByIdInCache(Integer id);
 
     // 用户注册
-    void register(UserModel userModel) throws BusinessException;
+    int register(UserModel userModel) throws BusinessException;
 
     // 用户登录
     /*
