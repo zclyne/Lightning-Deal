@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,13 +48,24 @@ public class SpringSecurityWebConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
+                // for /user, anyone can visit the REST API
+                .antMatchers("/user/**")
+                .permitAll()
+                // allow anyone to visit the home page
                 .antMatchers("/")
                 .permitAll()
+                // for /item, only ADMIN can create item and publish promotion
+                .antMatchers("/item/create/**", "/item/publishpromo/**")
+                .hasRole("ADMIN")
+                // any other REST API requires authentication
+                .anyRequest()
+                .authenticated()
                 .and()
                 .formLogin()
                 .loginProcessingUrl("/login")
                 .and()
                 .logout()
+                .logoutUrl("/logout")
                 .permitAll()
                 .and()
                 .csrf()
@@ -64,17 +76,21 @@ public class SpringSecurityWebConfig extends WebSecurityConfigurerAdapter {
                     public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException e) throws IOException, ServletException {
                         httpServletResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
                         PrintWriter out = httpServletResponse.getWriter();
-                        CommonReturnType apiResponse = CommonReturnType.create("Please login！", "fail");
+                        CommonReturnType apiResponse = CommonReturnType.create("Unauthorized!", "fail");
+                        if (e instanceof InsufficientAuthenticationException) {
+                            e.printStackTrace();
+                            apiResponse.setData("Please login!");
+                        }
                         out.write(new ObjectMapper().writeValueAsString(apiResponse));
                         out.flush();
                         out.close();
                     }
                 });
-        http.addFilterAt(getTelephonePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAt(getUsernamePasswordJsonFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
-    protected UsernamePasswordJsonFilter getTelephonePasswordAuthenticationFilter() throws Exception {
+    protected UsernamePasswordJsonFilter getUsernamePasswordJsonFilter() throws Exception {
         UsernamePasswordJsonFilter filter = new UsernamePasswordJsonFilter();
         filter.setAuthenticationSuccessHandler(new AuthenticationSuccessHandler() {
             @Override
