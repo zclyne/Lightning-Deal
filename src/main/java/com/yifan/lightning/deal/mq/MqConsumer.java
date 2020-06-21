@@ -17,7 +17,7 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 
-@Component
+// @Component
 public class MqConsumer {
 
     private DefaultMQPushConsumer consumer;

@@ -20,7 +20,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
+// @Component
 public class MqProducer {
 
     private DefaultMQProducer producer;
