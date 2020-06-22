@@ -36,7 +36,7 @@ public class ItemController extends BaseController {
     private PromoService promoService;
 
     // 创建商品接口
-    @RequestMapping(value = "/create", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
+    @PostMapping("/create")
     public CommonReturnType createItem(@RequestParam(name = "title") String title,
                                        @RequestParam(name = "description") String description,
                                        @RequestParam(name = "price") BigDecimal price,
@@ -58,7 +58,7 @@ public class ItemController extends BaseController {
     }
 
     // 商品详情页浏览
-    @RequestMapping(value = "/get", method = {RequestMethod.GET})
+    @GetMapping("/get")
     public CommonReturnType getItem(@RequestParam(name = "id") Integer id) {
         // 此处使用多级缓存，顺序为本地热点缓存 -> redis缓存 -> 数据库
         ItemModel itemModel = null;
@@ -84,7 +84,7 @@ public class ItemController extends BaseController {
     }
 
     // 商品列表页面浏览
-    @RequestMapping(value = "/list", method = {RequestMethod.GET})
+    @GetMapping("/list")
     public CommonReturnType listItem() {
         List<ItemModel> itemModelList = itemService.listItem();
 
@@ -97,7 +97,7 @@ public class ItemController extends BaseController {
     }
 
     // 发布秒杀活动
-    @RequestMapping(value = "/publishpromo")
+    @GetMapping("/publishpromo")
     public CommonReturnType publishPromo(@RequestParam(name = "id") Integer id) {
         promoService.publicPromo(id);
         return CommonReturnType.create(null);

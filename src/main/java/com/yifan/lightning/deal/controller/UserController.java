@@ -82,7 +82,7 @@ public class UserController extends BaseController {
 //    }
 
     // 用户注册接口
-    @RequestMapping(value = "/register", method = {RequestMethod.POST})
+    @PostMapping("/register")
     public CommonReturnType register(@RequestParam(name = "telphone") String telphone,
                                      @RequestParam(name = "otpCode") String otpCode,
                                      @RequestParam(name = "username") String username,
@@ -132,7 +132,7 @@ public class UserController extends BaseController {
     }
 
     // 用户获取otp短信接口
-    @RequestMapping(value = "/getotp", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
+    @PostMapping("/getotp")
     public CommonReturnType getOtp(@RequestParam(name = "telphone") String telphone) {
         // 按照一定规则生成otp验证码
         Random random = new Random();

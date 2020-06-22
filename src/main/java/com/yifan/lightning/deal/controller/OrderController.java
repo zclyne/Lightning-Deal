@@ -7,11 +7,14 @@ import com.yifan.lightning.deal.response.CommonReturnType;
 import com.yifan.lightning.deal.service.ItemService;
 import com.yifan.lightning.deal.service.OrderService;
 import com.yifan.lightning.deal.service.PromoService;
+import com.yifan.lightning.deal.service.UserService;
 import com.yifan.lightning.deal.service.model.OrderModel;
 import com.yifan.lightning.deal.service.model.UserModel;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
@@ -33,6 +36,9 @@ public class OrderController extends BaseController {
     private PromoService promoService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private HttpServletRequest httpServletRequest;
 
     @Autowired
@@ -51,17 +57,22 @@ public class OrderController extends BaseController {
     }
 
     // 生成秒杀令牌
-    @RequestMapping(value = "/generatetoken", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
+    @PostMapping("/generatetoken")
     public CommonReturnType generateToken(@RequestParam(name = "itemId") Integer itemId,
-                                        @RequestParam(name = "promoId") Integer promoId) throws BusinessException {
+                                          @RequestParam(name = "promoId") Integer promoId,
+                                          Authentication authentication) throws BusinessException {
         // token方式获取用户信息
         // 先从request的路径中获取token，也可以在方法的参数中加一个token
-        String token = httpServletRequest.getParameterMap().get("token")[0];
-        if (StringUtils.isEmpty(token)) { // 用户未登录
-            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
-        }
+//        String token = httpServletRequest.getParameterMap().get("token")[0];
+//        if (StringUtils.isEmpty(token)) { // 用户未登录
+//            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
+//        }
         // 用户已登录，从redis中以token为键，获取对应的userModel
-        UserModel userModel = (UserModel) redisTemplate.opsForValue().get(token);
+        // UserModel userModel = (UserModel) redisTemplate.opsForValue().get(token);
+
+        // 获取用户
+        UserModel userModel = (UserModel) authentication.getPrincipal();
+
         if (userModel == null) { // 会话过期
             throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
         }
@@ -77,11 +88,12 @@ public class OrderController extends BaseController {
     }
 
     // 下单请求接口
-    @RequestMapping(value = "/createorder", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
+    @PostMapping("/createorder")
     public CommonReturnType createOrder(@RequestParam(name = "itemId") Integer itemId,
                                         @RequestParam(name = "promoId", required = false) Integer promoId,
                                         @RequestParam(name = "promoToken", required = false) String promoToken,
-                                        @RequestParam(name = "amount") Integer amount) throws BusinessException {
+                                        @RequestParam(name = "amount") Integer amount,
+                                        Authentication authentication) throws BusinessException {
 
         // 从session中获取用户信息
         // 获取用户的登录信息
@@ -93,15 +105,18 @@ public class OrderController extends BaseController {
 
         // token方式获取用户信息
         // 先从request的路径中获取token，也可以在方法的参数中加一个token
-        String token = httpServletRequest.getParameterMap().get("token")[0];
-        if (StringUtils.isEmpty(token)) { // 用户未登录
-            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
-        }
-        // 用户已登录，从redis中以token为键，获取对应的userModel
-        UserModel userModel = (UserModel) redisTemplate.opsForValue().get(token);
-        if (userModel == null) { // 会话过期
-            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
-        }
+//        String token = httpServletRequest.getParameterMap().get("token")[0];
+//        if (StringUtils.isEmpty(token)) { // 用户未登录
+//            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
+//        }
+//        // 用户已登录，从redis中以token为键，获取对应的userModel
+//        UserModel userModel = (UserModel) redisTemplate.opsForValue().get(token);
+//        if (userModel == null) { // 会话过期
+//            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
+//        }
+
+        // 获取用户
+        UserModel userModel = (UserModel) authentication.getPrincipal();
 
         // 若存在秒杀活动，校验秒杀令牌是否正确
         if (promoId != null) {

@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             return null;
         }
         // 调用userPasswordDOMapper获取到该用户对应的密码
-        UserPasswordDO  userPasswordDO = userPasswordDOMapper.selectByUserId(id);
+        UserPasswordDO userPasswordDO = userPasswordDOMapper.selectByUserId(id);
 
         return convertFromDataObject(userDO, userPasswordDO);
     }
@@ -136,6 +136,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         UserModel userModel = new UserModel();
         // 把userDO中的属性复制到userModel对应属性
         BeanUtils.copyProperties(userDO, userModel);
+        userModel.setUsername(userDO.getName()); // 由于属性名不同，所以需要手动设置username
         // 把密码赋给userModel
         if (userPasswordDO != null) {
             userModel.setPassword(userPasswordDO.getEncryptPassword());
