@@ -38,7 +38,7 @@ public class OrderController extends BaseController {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    @Autowired
+    // @Autowired
     private MqProducer mqProducer;
 
     private ExecutorService executorService;

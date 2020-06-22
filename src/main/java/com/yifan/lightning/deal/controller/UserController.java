@@ -82,7 +82,7 @@ public class UserController extends BaseController {
 //    }
 
     // 用户注册接口
-    @RequestMapping(value = "/register", method = {RequestMethod.POST}, consumes = {CONTENT_TYPE_FORMED})
+    @RequestMapping(value = "/register", method = {RequestMethod.POST})
     public CommonReturnType register(@RequestParam(name = "telphone") String telphone,
                                      @RequestParam(name = "otpCode") String otpCode,
                                      @RequestParam(name = "username") String username,
@@ -91,10 +91,10 @@ public class UserController extends BaseController {
                                      @RequestParam(name = "password") String password,
                                      HttpServletRequest request) throws BusinessException {
         // 验证手机号和对应的otpCode相符合
-        String inSessionOtpCode = (String) this.httpServletRequest.getSession().getAttribute(telphone);
-        if (!StringUtils.equals(otpCode, inSessionOtpCode)) { // 使用alibaba druid库中的判断String相等的方法，不需要自己判断null
-            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "短信验证码错误");
-        }
+//        String inSessionOtpCode = (String) this.httpServletRequest.getSession().getAttribute(telphone);
+//        if (!StringUtils.equals(otpCode, inSessionOtpCode)) { // 使用alibaba druid库中的判断String相等的方法，不需要自己判断null
+//            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "短信验证码错误");
+//        }
         // 用户注册
         UserModel userModel = new UserModel();
         userModel.setUsername(username);

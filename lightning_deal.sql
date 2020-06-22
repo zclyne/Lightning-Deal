@@ -184,7 +184,7 @@ CREATE TABLE `user_info` (
   `age` int(11) NOT NULL DEFAULT '0',
   `telphone` varchar(64) COLLATE utf8_bin NOT NULL DEFAULT '',
   `role` varchar(64) COLLATE utf8_bin NOT NULL DEFAULT 'ROLE_USER',
-  `register_mode` varchar(64) COLLATE utf8_bin NOT NULL COMMENT 'byphone, bywechat, byalipay',
+  `register_mode` varchar(64) COLLATE utf8_bin NOT NULL DEFAULT 'byphone' COMMENT 'byphone, bywechat, byalipay',
   `third_party_id` varchar(64) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '' COMMENT '第三方注册账号id',
   PRIMARY KEY (`id`),
   UNIQUE KEY `telphone` (`telphone`) USING BTREE
@@ -226,10 +226,12 @@ CREATE TABLE `user_password` (
 
 LOCK TABLES `user_password` WRITE;
 /*!40000 ALTER TABLE `user_password` DISABLE KEYS */;
+/* all the passwords are 'root' */
 INSERT INTO `user_password`
-VALUES (1,'$2a$10$UlM3jvBX/mKU/gkZFwzD6uP8ArPs8e6bBa9heJmIlv/YDTEoY7x8K',1),
-       (2,'$2a$10$UlM3jvBX/mKU/gkZFwzD6uP8ArPs8e6bBa9heJmIlv/YDTEoY7x8K',2),
-       (3,'$2a$10$UlM3jvBX/mKU/gkZFwzD6uP8ArPs8e6bBa9heJmIlv/YDTEoY7x8K',3);
+VALUES (1,'$2a$10$Og0eSzX7run1SPQ20JufH.0QDi4z21tbO/8MMyKSVZgfIz5xrzUWG',1),
+       (2,'$2a$10$Og0eSzX7run1SPQ20JufH.0QDi4z21tbO/8MMyKSVZgfIz5xrzUWG',2),
+       (3,'$2a$10$Og0eSzX7run1SPQ20JufH.0QDi4z21tbO/8MMyKSVZgfIz5xrzUWG',3);
+       (4,'$2a$10$Og0eSzX7run1SPQ20JufH.0QDi4z21tbO/8MMyKSVZgfIz5xrzUWG',4);
 /*!40000 ALTER TABLE `user_password` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

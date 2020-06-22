@@ -111,7 +111,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             return null;
         }
         UserDO userDO = new UserDO();
-        BeanUtils.copyProperties(userModel, userDO);
+        userDO.setAge(userModel.getAge());
+        userDO.setGender(userModel.getGender());
+        userDO.setRole(userModel.getRole());
+        userDO.setName(userModel.getUsername());
+        userDO.setTelphone(userModel.getTelphone());
         return userDO;
     }
 

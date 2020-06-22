@@ -52,7 +52,7 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    @Autowired
+    // @Autowired
     private MqProducer mqProducer;
 
     @Override
