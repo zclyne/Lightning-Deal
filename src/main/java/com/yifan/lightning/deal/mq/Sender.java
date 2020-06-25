@@ -23,12 +23,6 @@ public class Sender {
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
-    @PostConstruct
-    public void init() {
-        rabbitTemplate.setConfirmCallback(this);
-        rabbitTemplate.setReturnCallback(this);
-    }
-
     public void createOrderAndDecreseStock(Integer userId, Integer itemId, Integer promoId, Integer amount, String stockLogId) {
 
         Map<String, Object> map = new HashMap<>();
