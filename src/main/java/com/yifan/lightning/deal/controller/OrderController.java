@@ -3,6 +3,7 @@ package com.yifan.lightning.deal.controller;
 import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.error.EnumBusinessError;
 import com.yifan.lightning.deal.mq.MqProducer;
+import com.yifan.lightning.deal.mq.Sender;
 import com.yifan.lightning.deal.response.CommonReturnType;
 import com.yifan.lightning.deal.service.ItemService;
 import com.yifan.lightning.deal.service.OrderService;
@@ -12,6 +13,7 @@ import com.yifan.lightning.deal.service.model.UserModel;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
@@ -39,7 +41,7 @@ public class OrderController extends BaseController {
     private RedisTemplate redisTemplate;
 
     @Autowired
-    private MqProducer mqProducer;
+    private Sender sender;
 
     private ExecutorService executorService;
 
@@ -81,7 +83,8 @@ public class OrderController extends BaseController {
     public CommonReturnType createOrder(@RequestParam(name = "itemId") Integer itemId,
                                         @RequestParam(name = "promoId", required = false) Integer promoId,
                                         @RequestParam(name = "promoToken", required = false) String promoToken,
-                                        @RequestParam(name = "amount") Integer amount) throws BusinessException {
+                                        @RequestParam(name = "amount") Integer amount,
+                                        Authentication authentication) throws BusinessException {
 
         // 从session中获取用户信息
         // 获取用户的登录信息
@@ -93,15 +96,16 @@ public class OrderController extends BaseController {
 
         // token方式获取用户信息
         // 先从request的路径中获取token，也可以在方法的参数中加一个token
-        String token = httpServletRequest.getParameterMap().get("token")[0];
-        if (StringUtils.isEmpty(token)) { // 用户未登录
-            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
-        }
+//        String token = httpServletRequest.getParameterMap().get("token")[0];
+//        if (StringUtils.isEmpty(token)) { // 用户未登录
+//            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
+//        }
         // 用户已登录，从redis中以token为键，获取对应的userModel
-        UserModel userModel = (UserModel) redisTemplate.opsForValue().get(token);
-        if (userModel == null) { // 会话过期
-            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
-        }
+//        UserModel userModel = (UserModel) redisTemplate.opsForValue().get(token);
+//        if (userModel == null) { // 会话过期
+//            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
+//        }
+        UserModel userModel = (UserModel) authentication.getPrincipal();
 
         // 若存在秒杀活动，校验秒杀令牌是否正确
         if (promoId != null) {
@@ -128,10 +132,11 @@ public class OrderController extends BaseController {
                 // 通过事务型消息创建订单
                 // OrderModel orderModel = orderService.createOrder(userModel.getId(), itemId, promoId, amount);
                 // 参数中要传入库存流水id，用户消息队列来定期检查消息状态
-                if (!mqProducer.transactionAsyncReduceStock(userModel.getId(), itemId, promoId, amount, stockLogId)) {
-                    // 如果下单失败，抛出异常
-                    throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR, "下单失败");
-                }
+//                if (!mqProducer.transactionAsyncReduceStock(userModel.getId(), itemId, promoId, amount, stockLogId)) {
+//                    // 如果下单失败，抛出异常
+//                    throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR, "下单失败");
+//                }
+                sender.createOrderAndDecreseStock(userModel.getId(), itemId, promoId, amount, stockLogId);
 
                 if (promoId != null) { // 若存在秒杀活动，下单完成后，把令牌还回去
                     redisTemplate.opsForValue().increment("promo_door_count_" + promoId, 1);

@@ -30,4 +30,12 @@ public class MqMessage {
     public void setMap(Map<String, Object> map) {
         this.map = map;
     }
+
+    @Override
+    public String toString() {
+        return "MqMessage{" +
+                "id='" + id + '\'' +
+                ", map=" + map +
+                '}';
+    }
 }
