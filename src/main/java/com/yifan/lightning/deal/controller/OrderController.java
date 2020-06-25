@@ -48,13 +48,8 @@ public class OrderController extends BaseController {
     @Autowired
     private RedisTemplate redisTemplate;
 
-<<<<<<< HEAD
-    // @Autowired
-    private MqProducer mqProducer;
-=======
     @Autowired
     private Sender sender;
->>>>>>> feature/rabbitmq
 
     private ExecutorService executorService;
 
