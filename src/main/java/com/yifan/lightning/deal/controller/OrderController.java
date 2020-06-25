@@ -15,10 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
-<<<<<<< HEAD
-import org.springframework.security.core.userdetails.UserDetails;
-=======
->>>>>>> feature/rabbitmq
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
