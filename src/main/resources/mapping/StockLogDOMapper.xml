@@ -119,4 +119,10 @@
       status = #{status,jdbcType=INTEGER}
     where stock_log_id = #{stockLogId,jdbcType=VARCHAR}
   </update>
+
+  <select id="selectByStatus" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select * from stock_log
+    where status = #{status,jdbcType=INTEGER}
+  </select>
+
 </mapper>

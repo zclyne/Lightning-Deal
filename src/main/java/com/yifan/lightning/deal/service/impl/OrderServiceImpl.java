@@ -16,6 +16,7 @@ import com.yifan.lightning.deal.service.model.OrderModel;
 import com.yifan.lightning.deal.service.model.UserModel;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private StockLogDOMapper stockLogDOMapper;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @Override
     @Transactional
     public OrderModel createOrder(Integer userId, Integer itemId, Integer promoId, Integer amount, String stockLogId) throws BusinessException {
@@ -59,6 +63,11 @@ public class OrderServiceImpl implements OrderService {
         ItemModel itemModel = itemService.getItemByIdInCache(itemId);
         if (itemModel == null) {
             throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "商品不存在");
+        }
+
+        // 检查redis中是否包含商品的库存信息，若不包含，则把库存量存入redis中
+        if (!redisTemplate.hasKey("promo_item_stock" + itemModel.getId())) {
+            redisTemplate.opsForValue().set("promo_item_stock_" + itemModel.getId(), itemModel.getStock());
         }
 
         // 校验购买数量

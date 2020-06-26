@@ -123,4 +123,11 @@
     where item_id = #{itemId} and stock >= #{amount}
   </update>
 
+  <!-- 加库存操作 -->
+  <update id="increaseStock">
+    update item_stock
+    set stock = stock + #{amount}
+    where item_id = #{itemId}
+  </update>
+
 </mapper>

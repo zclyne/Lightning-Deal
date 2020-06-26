@@ -58,4 +58,7 @@ public interface ItemStockDOMapper {
     // 减库存操作，返回值int是受影响的行数
     int decreaseStock(@Param("itemId") Integer itemId, @Param("amount") Integer amount);
 
+    // 增加库存操作
+    int increaseStock(@Param("itemId") Integer itemId, @Param("amount") Integer amount);
+
 }

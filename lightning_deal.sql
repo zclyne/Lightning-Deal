@@ -108,16 +108,6 @@ CREATE TABLE `order_info` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `order_info`
---
-
-LOCK TABLES `order_info` WRITE;
-/*!40000 ALTER TABLE `order_info` DISABLE KEYS */;
-INSERT INTO `order_info` VALUES ('2019092600000000',8,4,5499,1,5499,0),('2019092600000100',8,4,5499,1,5499,0),('2019092600000200',15,4,4499,1,4499,1);
-/*!40000 ALTER TABLE `order_info` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `promo`
 --
 
