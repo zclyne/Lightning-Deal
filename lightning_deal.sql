@@ -195,6 +195,16 @@ VALUES (1,'adam',1,20,'13333333333', 'ROLE_USER', 'byphone',''),
 /*!40000 ALTER TABLE `user_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
+DROP TABLE IF EXISTS `user_item`;
+
+CREATE TABLE `user_item` (
+                                 `id` int(11) NOT NULL AUTO_INCREMENT,
+                                 `user_id` int(11) NOT NULL DEFAULT '0',
+                                 `item_id` int(11) NOT NULL DEFAULT '0',
+                                 `amount`  int(255) NOT NULL DEFAULT '0',
+                                 PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
 --
 -- Table structure for table `user_password`
 --

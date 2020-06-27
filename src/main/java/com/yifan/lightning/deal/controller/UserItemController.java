@@ -1,0 +1,49 @@
+package com.yifan.lightning.deal.controller;
+
+import com.yifan.lightning.deal.response.CommonReturnType;
+import com.yifan.lightning.deal.service.UserItemService;
+import com.yifan.lightning.deal.service.model.UserItemModel;
+import com.yifan.lightning.deal.service.model.UserModel;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/useritem")
+public class UserItemController {
+
+    @Autowired
+    private UserItemService userItemService;
+
+    @GetMapping("/list")
+    public List<UserItemModel> listUserItems(Authentication authentication) {
+        UserModel userModel = (UserModel) authentication.getPrincipal();
+        Integer userId = userModel.getId();
+        List<UserItemModel> result = userItemService.listItemByUserId(userId);
+        return result;
+    }
+
+    @PostMapping("/add")
+    public CommonReturnType addUserItem(@RequestParam("itemId") Integer itemId,
+                                    @RequestParam("amount") Integer amount,
+                                    Authentication authentication) {
+        UserModel userModel = (UserModel) authentication.getPrincipal();
+        Integer userId = userModel.getId();
+        Integer affectedRowNumber = userItemService.addItem(userId, itemId, amount);
+        if (affectedRowNumber == 1) {
+            return CommonReturnType.create("Successfully added the item to the cart");
+        } else {
+            return CommonReturnType.create("Failed to add the item, please check the parameters or try again later", "fail");
+        }
+    }
+
+    @PutMapping("/update")
+    public CommonReturnType updateUserItem(@RequestParam("itemId") Integer itemId,
+                                           @RequestParam("amount") Integer amount,
+                                           Authentication authentication) {
+        return CommonReturnType.create(null);
+    }
+
+}
