@@ -27,6 +27,7 @@ public class DatabaseRollbackTask {
         if (stockLogDOList != null && !stockLogDOList.isEmpty()) {
             for (StockLogDO stockLogDO : stockLogDOList) {
                 itemStockDOMapper.increaseStock(stockLogDO.getItemId(), stockLogDO.getAmount());
+                stockLogDOMapper.deleteByPrimaryKey(stockLogDO.getStockLogId());
             }
         }
     }

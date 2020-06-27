@@ -1,5 +1,6 @@
 package com.yifan.lightning.deal.service.impl;
 
+import com.yifan.lightning.deal.constant.DatabaseConst;
 import com.yifan.lightning.deal.dao.OrderDOMapper;
 import com.yifan.lightning.deal.dao.SequenceDOMapper;
 import com.yifan.lightning.deal.dao.StockLogDOMapper;
@@ -118,7 +119,7 @@ public class OrderServiceImpl implements OrderService {
         if (stockLogDO == null) { // 这种情况理论上不存在
             throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR);
         }
-        stockLogDO.setStatus(2); // 状态2表示下单扣减库存成功
+        stockLogDO.setStatus(DatabaseConst.STOCK_LOG_STATUS_COMPLETE); // 状态2表示下单扣减库存成功
         stockLogDOMapper.updateByPrimaryKeySelective(stockLogDO);
 
         // 因为已经使用了RocketMQ的事务型消息，所以这里不再需要处理关于数据库库存的任何内容

@@ -2,6 +2,7 @@ package com.yifan.lightning.deal.mq;
 
 import com.rabbitmq.client.Channel;
 import com.yifan.lightning.deal.config.RabbitMQConfig;
+import com.yifan.lightning.deal.constant.DatabaseConst;
 import com.yifan.lightning.deal.dao.ItemStockDOMapper;
 import com.yifan.lightning.deal.dao.StockLogDOMapper;
 import com.yifan.lightning.deal.dataobject.StockLogDO;
@@ -42,7 +43,7 @@ public class Receiver {
             // 如果有异常，则事务需要回滚，返回ROLLBACK
             // 设置对应stockLog为回滚状态
             StockLogDO stockLogDO = stockLogDOMapper.selectByPrimaryKey(stockLogId);
-            stockLogDO.setStatus(3); // 3表示需要回滚
+            stockLogDO.setStatus(DatabaseConst.STOCK_LOG_STATUS_ROLLBACK);
             stockLogDOMapper.updateByPrimaryKeySelective(stockLogDO);
         }
         // 数据库减库存
@@ -50,7 +51,7 @@ public class Receiver {
         if (afffectedRowNumber != 1) { // 减库存结果不正确
             // 设置对应stockLog为回滚状态
             StockLogDO stockLogDO = stockLogDOMapper.selectByPrimaryKey(stockLogId);
-            stockLogDO.setStatus(3); // 3表示需要回滚
+            stockLogDO.setStatus(DatabaseConst.STOCK_LOG_STATUS_ROLLBACK);
             stockLogDOMapper.updateByPrimaryKeySelective(stockLogDO);
         }
     }
