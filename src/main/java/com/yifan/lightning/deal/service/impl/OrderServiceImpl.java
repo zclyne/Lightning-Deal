@@ -14,15 +14,12 @@ import com.yifan.lightning.deal.service.OrderService;
 import com.yifan.lightning.deal.service.UserService;
 import com.yifan.lightning.deal.service.model.ItemModel;
 import com.yifan.lightning.deal.service.model.OrderModel;
-import com.yifan.lightning.deal.service.model.UserModel;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -121,22 +118,6 @@ public class OrderServiceImpl implements OrderService {
         }
         stockLogDO.setStatus(DatabaseConst.STOCK_LOG_STATUS_COMPLETE); // 状态2表示下单扣减库存成功
         stockLogDOMapper.updateByPrimaryKeySelective(stockLogDO);
-
-        // 因为已经使用了RocketMQ的事务型消息，所以这里不再需要处理关于数据库库存的任何内容
-//        // spring boot的transaction事务在最后一起commit，而commit过程仍有可能因为网络不通畅的原因失败
-//        // 所以要把数据库的库存操作放在commit之后
-//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-//            @Override
-//            public void afterCommit() {
-//                // 在返回前端之前，异步发送减库存消息到数据库
-//                boolean mqResult = itemService.asyncDecreaseStock(itemId, amount);
-//                // 因为是在commit之后发送的异步消息，所以不能失败
-////                if (!mqResult) { // 异步发送消息失败，回滚库存
-////                    itemService.increaseStock(itemId, amount);
-////                    throw new BusinessException(EnumBusinessError.MQ_SEND_FAIL);
-////                }
-//            }
-//        });
 
         // 返回前端
         return orderModel;

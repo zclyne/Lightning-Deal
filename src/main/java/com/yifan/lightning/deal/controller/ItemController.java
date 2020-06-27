@@ -1,5 +1,6 @@
 package com.yifan.lightning.deal.controller;
 
+import com.yifan.lightning.deal.constant.PromoConst;
 import com.yifan.lightning.deal.controller.viewobject.ItemVO;
 import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.response.CommonReturnType;
@@ -113,7 +114,7 @@ public class ItemController extends BaseController {
             itemVO.setStartDate(itemModel.getPromoModel().getStartDate().toString(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")));
             itemVO.setEndDate(itemModel.getPromoModel().getEndDate().toString(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")));
         } else { // 没有秒杀活动
-            itemVO.setPromoStatus(3);
+            itemVO.setPromoStatus(PromoConst.PROMO_STATUS_NO_PROMO);
         }
         return itemVO;
     }

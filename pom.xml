@@ -81,12 +81,6 @@
       <artifactId>guava</artifactId>
       <version>18.0</version>
     </dependency>
-    <!-- RocketMQ -->
-    <dependency>
-      <groupId>org.apache.rocketmq</groupId>
-      <artifactId>rocketmq-client</artifactId>
-      <version>4.3.0</version>
-    </dependency>
     <!-- spring security -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

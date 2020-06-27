@@ -14,7 +14,7 @@ Apache Jmeter
 
 前端：Bootstrap + jQuery
 
-后端：Spring Boot + MyBatis + MySQL
+后端：Spring Boot + MyBatis + MySQL + RabbitMQ
 
 中间件：Druid数据库连接池 + Redis缓存
 
@@ -26,6 +26,7 @@ Apache Jmeter
 2. Nginx配置动静分离，进一步减小Tomcat服务器压力
 3. 使用Redis对商品详情页做缓存，降低MySQL数据库访问次数
 4. 使用Guava Cache配置本地热点缓存
+5. 使用RabbitMQ实现异步下单与数据库操作
 
 ## 当前优化结果
 
@@ -33,7 +34,7 @@ Apache Jmeter
 
 ## 使用方法
 
-1. 将本项目clone到本地，确保本地已经安装好MySQL数据库以及Redis
+1. 将本项目clone到本地，确保本地已经安装好MySQL数据库、Redis及RabbitMQ
 
 2. 执行项目根目录下的lightning_deal.sql，创建项目数据库，其中包含一些测试数据
 

@@ -2,8 +2,6 @@ package com.yifan.lightning.deal.service.impl;
 
 import com.yifan.lightning.deal.dao.PromoDOMapper;
 import com.yifan.lightning.deal.dataobject.PromoDO;
-import com.yifan.lightning.deal.error.BusinessException;
-import com.yifan.lightning.deal.error.EnumBusinessError;
 import com.yifan.lightning.deal.service.ItemService;
 import com.yifan.lightning.deal.service.PromoService;
 import com.yifan.lightning.deal.service.UserService;

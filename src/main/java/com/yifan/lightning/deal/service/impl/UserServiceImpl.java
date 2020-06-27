@@ -29,8 +29,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Autowired
     private UserDOMapper userDOMapper;
+
     @Autowired
     private UserPasswordDOMapper userPasswordDOMapper;
+
     @Autowired
     private ValidatorImpl validator;
 
@@ -78,13 +80,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (userModel == null) {
             throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR);
         }
-        // 使用apache-commons-lang中的StringUtils，不用自己判断null
-//        if (StringUtils.isEmpty(userModel.getName())
-//                || userModel.getGender() == null
-//                || userModel.getAge() == null
-//                || StringUtils.isEmpty(userModel.getTelphone())) {
-//            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR);
-//        }
         // 使用validator对userModel做校验
         ValidationResult result = validator.validate(userModel);
         if (result.isHasErrors()) {

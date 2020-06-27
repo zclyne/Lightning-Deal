@@ -22,9 +22,6 @@ public interface ItemService {
     // 减库存
     boolean decreaseStock(Integer itemId, Integer amount) throws BusinessException;
 
-    // 异步更新库存
-    boolean asyncDecreaseStock(Integer itemId, Integer amount);
-
     // 库存回滚
     boolean increaseStock(Integer itemId, Integer amount);
 

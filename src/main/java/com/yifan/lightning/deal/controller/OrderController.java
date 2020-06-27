@@ -2,7 +2,6 @@ package com.yifan.lightning.deal.controller;
 
 import com.yifan.lightning.deal.error.BusinessException;
 import com.yifan.lightning.deal.error.EnumBusinessError;
-import com.yifan.lightning.deal.mq.MqProducer;
 import com.yifan.lightning.deal.mq.Sender;
 import com.yifan.lightning.deal.response.CommonReturnType;
 import com.yifan.lightning.deal.service.ItemService;
@@ -61,15 +60,6 @@ public class OrderController extends BaseController {
     public CommonReturnType generateToken(@RequestParam(name = "itemId") Integer itemId,
                                           @RequestParam(name = "promoId") Integer promoId,
                                           Authentication authentication) throws BusinessException {
-        // token方式获取用户信息
-        // 先从request的路径中获取token，也可以在方法的参数中加一个token
-//        String token = httpServletRequest.getParameterMap().get("token")[0];
-//        if (StringUtils.isEmpty(token)) { // 用户未登录
-//            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
-//        }
-        // 用户已登录，从redis中以token为键，获取对应的userModel
-        // UserModel userModel = (UserModel) redisTemplate.opsForValue().get(token);
-
         // 获取用户
         UserModel userModel = (UserModel) authentication.getPrincipal();
 
@@ -94,21 +84,6 @@ public class OrderController extends BaseController {
                                         @RequestParam(name = "promoToken", required = false) String promoToken,
                                         @RequestParam(name = "amount") Integer amount,
                                         Authentication authentication) throws BusinessException {
-
-        // 从session中获取用户信息
-        // 获取用户的登录信息
-//        Boolean isLogin = (Boolean) this.httpServletRequest.getSession().getAttribute("IS_LOGIN");
-//        if (isLogin == null || !isLogin) {
-//            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
-//        }
-//        UserModel userModel = (UserModel) this.httpServletRequest.getSession().getAttribute("LOGIN_USER");
-
-        // token方式获取用户信息
-        // 先从request的路径中获取token，也可以在方法的参数中加一个token
-//        String token = httpServletRequest.getParameterMap().get("token")[0];
-//        if (StringUtils.isEmpty(token)) { // 用户未登录
-//            throw new BusinessException(EnumBusinessError.USER_NOT_LOGIN);
-//        }
 
         // 获取用户
         UserModel userModel = (UserModel) authentication.getPrincipal();
@@ -135,13 +110,6 @@ public class OrderController extends BaseController {
                 // 加入库存流水init状态
                 String stockLogId = itemService.initStockLog(itemId, amount);
 
-                // 通过事务型消息创建订单
-                // OrderModel orderModel = orderService.createOrder(userModel.getId(), itemId, promoId, amount);
-                // 参数中要传入库存流水id，用户消息队列来定期检查消息状态
-//                if (!mqProducer.transactionAsyncReduceStock(userModel.getId(), itemId, promoId, amount, stockLogId)) {
-//                    // 如果下单失败，抛出异常
-//                    throw new BusinessException(EnumBusinessError.UNKNOWN_ERROR, "下单失败");
-//                }
                 sender.createOrderAndDecreseStock(userModel.getId(), itemId, promoId, amount, stockLogId);
 
                 if (promoId != null) { // 若存在秒杀活动，下单完成后，把令牌还回去
