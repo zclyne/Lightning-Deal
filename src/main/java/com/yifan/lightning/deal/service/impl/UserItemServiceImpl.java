@@ -41,7 +41,35 @@ public class UserItemServiceImpl implements UserItemService {
         return result;
     }
 
+    @Override
+    public UserItemModel selectItemByUserIdAndItemId(Integer userId, Integer itemId) {
+        UserItemDO userItemDO = userItemDOMapper.selectByUserIdAndItemId(userId, itemId);
+        return convertFromUserItemDO(userItemDO);
+    }
+
+    @Override
+    public Integer updateByPrimaryKeySelective(UserItemModel userItemModel) {
+        UserItemDO userItemDO = new UserItemDO();
+        userItemDO.setId(userItemModel.getId());
+        userItemDO.setUserId(userItemModel.getUserId());
+        userItemDO.setItemId(userItemModel.getItemId());
+        userItemDO.setAmount(userItemModel.getAmount());
+        return userItemDOMapper.updateByPrimaryKeySelective(userItemDO);
+    }
+
+    @Override
+    public Integer deleteItemsByUserIdAndItemId(Integer userId, List<Integer> itemIds) {
+        int result = 0;
+        for (Integer itemId : itemIds) {
+            result += userItemDOMapper.deleteByUserIdAndItemId(userId, itemId);
+        }
+        return result;
+    }
+
     private UserItemModel convertFromUserItemDO(UserItemDO userItemDO) {
+        if (userItemDO == null) {
+            return null;
+        }
         UserItemModel userItemModel = new UserItemModel();
         BeanUtils.copyProperties(userItemDO, userItemModel);
         ItemDO itemDO = itemDOMapper.selectByPrimaryKey(userItemDO.getItemId());

@@ -10,4 +10,10 @@ public interface UserItemService {
 
     List<UserItemModel> listItemByUserId(Integer userId);
 
+    UserItemModel selectItemByUserIdAndItemId(Integer userId, Integer itemId);
+
+    Integer updateByPrimaryKeySelective(UserItemModel userItemModel);
+
+    Integer deleteItemsByUserIdAndItemId(Integer userId, List<Integer> itemIds);
+
 }

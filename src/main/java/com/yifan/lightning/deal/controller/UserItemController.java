@@ -43,7 +43,29 @@ public class UserItemController {
     public CommonReturnType updateUserItem(@RequestParam("itemId") Integer itemId,
                                            @RequestParam("amount") Integer amount,
                                            Authentication authentication) {
-        return CommonReturnType.create(null);
+        UserModel userModel = (UserModel) authentication.getPrincipal();
+        Integer userId = userModel.getId();
+        UserItemModel userItemModel = userItemService.selectItemByUserIdAndItemId(userId, itemId);
+        userItemModel.setAmount(amount);
+        Integer affectedRowNumber = userItemService.updateByPrimaryKeySelective(userItemModel);
+        if (affectedRowNumber == 1) {
+            return CommonReturnType.create("Successfully updated the item");
+        } else {
+            return CommonReturnType.create("Failed to update the item, please check the parameters or try again later", "fail");
+        }
+    }
+
+    @DeleteMapping("/delete")
+    public CommonReturnType deleteUserItems(@RequestBody List<Integer> itemIds,
+                                            Authentication authentication) {
+        UserModel userModel = (UserModel) authentication.getPrincipal();
+        Integer userId = userModel.getId();
+        int affectedRowNumber = userItemService.deleteItemsByUserIdAndItemId(userId, itemIds);
+        if (affectedRowNumber == itemIds.size()) {
+            return CommonReturnType.create("Successfully deleted the items");
+        } else {
+            return CommonReturnType.create("Failed to delete the items", "fail");
+        }
     }
 
 }

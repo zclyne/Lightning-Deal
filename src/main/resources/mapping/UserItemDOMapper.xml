@@ -125,4 +125,16 @@
     where user_id = #{userId,jdbcType=INTEGER}
   </select>
 
+  <select id="selectByUserIdAndItemId" resultMap="BaseResultMap">
+    select * from user_item
+    where user_id = #{userId,jdbcType=INTEGER}
+    and item_id = #{itemId,jdbcType=INTEGER}
+  </select>
+  
+  <delete id="deleteByUserIdAndItemId">
+    delete from user_item
+    where user_id = #{userId,jdbcType=INTEGER}
+    and item_id = #{itemId,jdbcType=INTEGER}
+  </delete>
+
 </mapper>

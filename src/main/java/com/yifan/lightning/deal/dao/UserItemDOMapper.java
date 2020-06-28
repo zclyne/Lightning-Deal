@@ -1,6 +1,7 @@
 package com.yifan.lightning.deal.dao;
 
 import com.yifan.lightning.deal.dataobject.UserItemDO;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -55,5 +56,11 @@ public interface UserItemDOMapper {
 
     // 根据用户id查询该用户购物车中的所有商品
     List<UserItemDO> listByUserId(Integer userId);
+
+    // 根据用户id和商品id查询用户购物车中的特定商品
+    UserItemDO selectByUserIdAndItemId(@Param("userId") Integer userId, @Param("itemId") Integer itemId);
+
+    // 根据用户id和商品id从购物车中删除商品
+    int deleteByUserIdAndItemId(@Param("userId") Integer userId, @Param("itemId") Integer itemId);
 
 }
