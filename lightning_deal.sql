@@ -205,6 +205,10 @@ CREATE TABLE `user_item` (
                                  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
+INSERT INTO `user_item`
+VALUES (1, 4, 4, 2),
+       (1, 4, 5, 3);
+
 --
 -- Table structure for table `user_password`
 --
