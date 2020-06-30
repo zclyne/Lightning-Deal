@@ -180,4 +180,9 @@
     from user_info
     where name = #{name,jdbcType=VARCHAR}
   </select>
+
+  <select id="listAllUsers" resultMap="BaseResultMap">
+    select * from user_info
+  </select>
+
 </mapper>

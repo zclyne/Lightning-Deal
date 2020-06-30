@@ -21,6 +21,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 // service层必须返回model对象而不能直接返回do，do只是对数据库表的直接映射
@@ -48,6 +50,18 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         int userId = userDO.getId();
         UserPasswordDO userPasswordDO = userPasswordDOMapper.selectByUserId(userId);
         return convertFromDataObject(userDO, userPasswordDO);
+    }
+
+    @Override
+    public List<UserModel> listAllUsers() {
+        List<UserDO> userDOs = userDOMapper.listAllUsers();
+        List<UserModel> result = new ArrayList<>();
+        userDOs.stream().forEach(userDO -> {
+            UserPasswordDO userPasswordDO = userPasswordDOMapper.selectByUserId(userDO.getId());
+            UserModel userModel = convertFromDataObject(userDO, userPasswordDO);
+            result.add(userModel);
+        });
+        return result;
     }
 
     @Override

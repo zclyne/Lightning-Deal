@@ -221,7 +221,7 @@ CREATE TABLE `user_password` (
   `encrypt_password` varchar(512) COLLATE utf8_bin NOT NULL DEFAULT '',
   `user_id` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -238,6 +238,47 @@ VALUES (1,'$2a$10$Og0eSzX7run1SPQ20JufH.0QDi4z21tbO/8MMyKSVZgfIz5xrzUWG',1),
        (4,'$2a$10$Og0eSzX7run1SPQ20JufH.0QDi4z21tbO/8MMyKSVZgfIz5xrzUWG',4);
 /*!40000 ALTER TABLE `user_password` ENABLE KEYS */;
 UNLOCK TABLES;
+
+/* notification table */
+DROP TABLE IF EXISTS `notification`;
+SET character_set_client = utf8mb4 ;
+CREATE TABLE `notification` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `content` varchar(5000) COLLATE utf8_bin NOT NULL DEFAULT '',
+    `date` TIMESTAMP NOT NULL DEFAULT NOW(),
+    `status` TINYINT NOT NULL DEFAULT '0' COMMENT '0 for unread, 1 for read',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+INSERT INTO `notification`
+VALUES (1, 'first notification from sys admin', '2020-06-30 20:30:00'),
+       (2, 'first notification from sys admin', '2020-06-30 20:30:00'),
+       (3, 'first notification from sys admin', '2020-06-30 20:30:00');
+
+# /* map between notification and sender */
+# DROP TABLE IF EXISTS `notification_sender`;
+# CREATE TABLE `notification_sender` (
+#     `notification_id` int(11) NOT NULL,
+#     `sender_id` int(11) NOT NULL
+# ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+#
+# INSERT INTO `notification_sender`
+# VALUES (1, 4),
+#        (2, 4),
+#        (3, 4);
+
+/* map between notification and receiver */
+DROP TABLE IF EXISTS `notification_receiver`;
+CREATE TABLE `notification_receiver` (
+    `notification_id` int(11) NOT NULL,
+    `receiver_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+INSERT INTO `notification_receiver`
+VALUES (1, 1),
+       (2, 2),
+       (3, 3);
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -247,5 +288,3 @@ UNLOCK TABLES;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2019-09-27  0:21:15
