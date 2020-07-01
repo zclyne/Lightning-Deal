@@ -244,40 +244,16 @@ DROP TABLE IF EXISTS `notification`;
 SET character_set_client = utf8mb4 ;
 CREATE TABLE `notification` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
+    `sender_id` int(11) NOT NULL,
     `content` varchar(5000) COLLATE utf8_bin NOT NULL DEFAULT '',
-    `date` TIMESTAMP NOT NULL DEFAULT NOW(),
-    `status` TINYINT NOT NULL DEFAULT '0' COMMENT '0 for unread, 1 for read',
+    `timestamp` TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 INSERT INTO `notification`
-VALUES (1, 'first notification from sys admin', '2020-06-30 20:30:00'),
-       (2, 'first notification from sys admin', '2020-06-30 20:30:00'),
-       (3, 'first notification from sys admin', '2020-06-30 20:30:00');
-
-# /* map between notification and sender */
-# DROP TABLE IF EXISTS `notification_sender`;
-# CREATE TABLE `notification_sender` (
-#     `notification_id` int(11) NOT NULL,
-#     `sender_id` int(11) NOT NULL
-# ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-#
-# INSERT INTO `notification_sender`
-# VALUES (1, 4),
-#        (2, 4),
-#        (3, 4);
-
-/* map between notification and receiver */
-DROP TABLE IF EXISTS `notification_receiver`;
-CREATE TABLE `notification_receiver` (
-    `notification_id` int(11) NOT NULL,
-    `receiver_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-
-INSERT INTO `notification_receiver`
-VALUES (1, 1),
-       (2, 2),
-       (3, 3);
+VALUES (1, 4, 'first notification from sys admin', '2020-06-30 20:30:00'),
+       (2, 4, 'second notification from sys admin', '2020-06-30 20:30:00'),
+       (3, 4, 'third notification from sys admin', '2020-06-30 20:30:00');
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

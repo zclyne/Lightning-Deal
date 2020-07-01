@@ -1,12 +1,6 @@
 package com.yifan.lightning.deal.mq;
 
 import com.yifan.lightning.deal.config.RabbitMQConfig;
-import com.yifan.lightning.deal.dao.StockLogDOMapper;
-import com.yifan.lightning.deal.dataobject.StockLogDO;
-import com.yifan.lightning.deal.error.BusinessException;
-import com.yifan.lightning.deal.service.OrderService;
-import org.apache.rocketmq.client.producer.LocalTransactionState;
-import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;

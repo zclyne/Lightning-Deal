@@ -57,6 +57,9 @@ public class SpringSecurityWebConfig extends WebSecurityConfigurerAdapter {
                 // for /item, only ADMIN can create item and publish promotion
                 .antMatchers("/item/create/**", "/item/publishpromo/**")
                 .hasRole("ADMIN")
+                // only ADMIN can push notifications to other users
+                .antMatchers("/notification/broadcast")
+                .hasRole("ADMIN")
                 // any other REST API requires authentication
                 .anyRequest()
                 .authenticated()

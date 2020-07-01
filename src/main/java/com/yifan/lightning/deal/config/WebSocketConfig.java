@@ -12,11 +12,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-
+        // connection url of stomp client
+        registry.addEndpoint("/ws").withSockJS();
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-
+        // message with destination that starts with "/app" would be routed to the corresponding handler method
+        registry.setApplicationDestinationPrefixes("/app")
+                // the prefix of the broadcast destination is /topic
+                .enableSimpleBroker("/topic");
     }
 }

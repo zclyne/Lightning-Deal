@@ -14,7 +14,7 @@ public class BaseMessageModel {
 
     private String content;
 
-    private Timestamp date;
+    private Timestamp timestamp;
 
     public Integer getId() {
         return id;
@@ -40,12 +40,12 @@ public class BaseMessageModel {
         this.content = content;
     }
 
-    public Timestamp getDate() {
-        return date;
+    public Timestamp getTimestamp() {
+        return timestamp;
     }
 
-    public void setDate(Timestamp date) {
-        this.date = date;
+    public void setTimestamp(Timestamp timestamp) {
+        this.timestamp = timestamp;
     }
 
 }
