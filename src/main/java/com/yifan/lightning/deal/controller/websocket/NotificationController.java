@@ -38,6 +38,9 @@ public class NotificationController {
     }
 
     private NotificationVO convertFromNotificationModel(NotificationModel notificationModel) {
+        if (notificationModel == null) {
+            return null;
+        }
         NotificationVO notificationVO = new NotificationVO();
         notificationVO.setContent(notificationModel.getContent());
         notificationVO.setSenderName(notificationModel.getSender().getUsername());

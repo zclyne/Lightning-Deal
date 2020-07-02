@@ -1,5 +1,6 @@
 package com.yifan.lightning.deal.service.impl;
 
+import com.yifan.lightning.deal.controller.viewobject.NotificationVO;
 import com.yifan.lightning.deal.dao.NotificationDOMapper;
 import com.yifan.lightning.deal.dataobject.NotificationDO;
 import com.yifan.lightning.deal.service.NotificationService;
@@ -36,17 +37,8 @@ public class NotificationServiceImpl implements NotificationService {
         notificationDOMapper.insert(notificationDO);
 
         // broadcast the notification to all users through websocket
-        NotificationModel notificationModel = convertFromNotificationDO(notificationDO);
-        simpMessagingTemplate.convertAndSend("/topic/notification", notificationModel);
-    }
-
-    private NotificationModel convertFromNotificationDO(NotificationDO notificationDO) {
-        NotificationModel notificationModel = new NotificationModel();
-        notificationModel.setId(notificationDO.getId());
-        notificationModel.setSender(userService.getUserById(notificationDO.getSenderId()));
-        notificationModel.setContent(notificationDO.getContent());
-        notificationModel.setTimestamp(notificationDO.getTimestamp());
-        return notificationModel;
+        NotificationVO notificationVO = convertToVOFromNotificationDO(notificationDO);
+        simpMessagingTemplate.convertAndSend("/topic/notification", notificationVO);
     }
 
     @Override
@@ -58,4 +50,29 @@ public class NotificationServiceImpl implements NotificationService {
         });
         return notificationModels;
     }
+
+    private NotificationModel convertFromNotificationDO(NotificationDO notificationDO) {
+        if (notificationDO == null) {
+            return null;
+        }
+        NotificationModel notificationModel = new NotificationModel();
+        notificationModel.setId(notificationDO.getId());
+        notificationModel.setSender(userService.getUserById(notificationDO.getSenderId()));
+        notificationModel.setContent(notificationDO.getContent());
+        notificationModel.setTimestamp(notificationDO.getTimestamp());
+        return notificationModel;
+    }
+
+    private NotificationVO convertToVOFromNotificationDO(NotificationDO notificationDO) {
+        if (notificationDO == null) {
+            return null;
+        }
+        UserModel sender = userService.getUserById(notificationDO.getSenderId());
+        NotificationVO notificationVO = new NotificationVO();
+        notificationVO.setContent(notificationDO.getContent());
+        notificationVO.setSenderName(sender.getUsername());
+        notificationVO.setTimestamp(notificationDO.getTimestamp());
+        return notificationVO;
+    }
+
 }

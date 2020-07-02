@@ -52,7 +52,10 @@ public class SpringSecurityWebConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/user/**")
                 .permitAll()
                 // allow anyone to visit the home page
-                .antMatchers("/")
+                .antMatchers("/", "/index.html")
+                .permitAll()
+                // allow anyone to access the static resources
+                .antMatchers("/**/*.js", "/**/*.css")
                 .permitAll()
                 // for /item, only ADMIN can create item and publish promotion
                 .antMatchers("/item/create/**", "/item/publishpromo/**")
