@@ -96,7 +96,8 @@ public class PromoServiceImpl implements PromoService {
 
         // 判断商品信息是否存在
         // 从redis中获取商品信息
-        ItemModel itemModel = itemService.getItemByIdInCache(itemId);
+//        ItemModel itemModel = itemService.getItemByIdInCache(itemId);
+        ItemModel itemModel = itemService.getItemById(itemId);
         if (itemModel == null) { // 不存在对应商品
             return null;
         }

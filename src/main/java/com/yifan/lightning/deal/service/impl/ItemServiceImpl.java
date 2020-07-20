@@ -17,6 +17,7 @@ import com.yifan.lightning.deal.validator.ValidationResult;
 import com.yifan.lightning.deal.validator.ValidatorImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,6 +86,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Cacheable(key = "#id")
     public ItemModel getItemById(Integer id) {
         ItemDO itemDO = itemDOMapper.selectByPrimaryKey(id);
         if (itemDO == null) {
@@ -106,17 +108,17 @@ public class ItemServiceImpl implements ItemService {
     }
 
     // 从redis缓存中获取商品及其秒杀活动信息
-    @Override
-    public ItemModel getItemByIdInCache(Integer id) {
-        ItemModel itemModel = (ItemModel) redisTemplate.opsForValue().get("item_validate_" + id);
-        if (itemModel == null) { // 若redis缓存中不存在该商品信息，查数据库
-            itemModel = this.getItemById(id);
-            redisTemplate.opsForValue().set("item_validate_" + id, itemModel);
-            // 设置有效时间为10分钟
-            redisTemplate.expire("item_validate_" + id, 10, TimeUnit.MINUTES);
-        }
-        return itemModel;
-    }
+//    @Override
+//    public ItemModel getItemByIdInCache(Integer id) {
+//        ItemModel itemModel = (ItemModel) redisTemplate.opsForValue().get("item_validate_" + id);
+//        if (itemModel == null) { // 若redis缓存中不存在该商品信息，查数据库
+//            itemModel = this.getItemById(id);
+//            redisTemplate.opsForValue().set("item_validate_" + id, itemModel);
+//            // 设置有效时间为10分钟
+//            redisTemplate.expire("item_validate_" + id, 10, TimeUnit.MINUTES);
+//        }
+//        return itemModel;
+//    }
 
     // 减库存操作必须保证原子性，所以要加上@Transactional
     // 该操作只需要修改item_stock表而不影响item_info表，体现出了先前把stock单独建表的好处

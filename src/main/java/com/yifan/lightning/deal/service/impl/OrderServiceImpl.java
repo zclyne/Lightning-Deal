@@ -58,13 +58,14 @@ public class OrderServiceImpl implements OrderService {
 //        }
 
         // 从redis中获取商品信息
-        ItemModel itemModel = itemService.getItemByIdInCache(itemId);
-        if (itemModel == null) {
-            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "商品不存在");
-        }
+//        ItemModel itemModel = itemService.getItemByIdInCache(itemId);
+//        if (itemModel == null) {
+//            throw new BusinessException(EnumBusinessError.PARAMETER_VALIDATION_ERROR, "商品不存在");
+//        }
+        ItemModel itemModel = itemService.getItemById(itemId);
 
         // 检查redis中是否包含商品的库存信息，若不包含，则把库存量存入redis中
-        if (!redisTemplate.hasKey("promo_item_stock" + itemModel.getId())) {
+        if (!redisTemplate.hasKey("promo_item_stock_" + itemModel.getId())) {
             redisTemplate.opsForValue().set("promo_item_stock_" + itemModel.getId(), itemModel.getStock());
         }
 
