@@ -1,11 +1,13 @@
 package com.yifan.lightning.deal.service.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 
 // 秒杀活动领域模型
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PromoModel implements Serializable {
 
     private Integer id;

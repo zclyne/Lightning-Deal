@@ -1,5 +1,6 @@
 package com.yifan.lightning.deal.service.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserModel implements Serializable, UserDetails {
     private Integer id;
     @NotBlank(message = "用户名不能为空")

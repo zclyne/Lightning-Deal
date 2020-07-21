@@ -16,6 +16,8 @@ import com.yifan.lightning.deal.service.model.ItemModel;
 import com.yifan.lightning.deal.service.model.OrderModel;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -24,8 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
+@CacheConfig(cacheNames = "orders")
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
@@ -45,6 +50,23 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Override
+    @Cacheable(key = "#orderId")
+    public OrderModel getOrderById(String orderId) {
+        OrderDO orderDO = orderDOMapper.selectByPrimaryKey(orderId);
+        return convertFromOrderDO(orderDO);
+    }
+
+    @Override
+    public List<OrderModel> listOrdersByUserId(Integer userId) {
+        List<OrderDO> orderDOs = orderDOMapper.listOrdersByUserId(userId);
+        List<OrderModel> orderModels = new ArrayList<>();
+        orderDOs.forEach(orderDO -> {
+            orderModels.add(convertFromOrderDO(orderDO));
+        });
+        return orderModels;
+    }
 
     @Override
     @Transactional
@@ -133,6 +155,20 @@ public class OrderServiceImpl implements OrderService {
         orderDO.setItemPrice(orderModel.getItemPrice().doubleValue());
         orderDO.setOrderPrice(orderModel.getOrderPrice().doubleValue());
         return orderDO;
+    }
+
+    private OrderModel convertFromOrderDO(OrderDO orderDO) {
+        if (orderDO == null) {
+            return null;
+        }
+        OrderModel orderModel = new OrderModel();
+        orderModel.setId(orderDO.getId());
+        orderModel.setItemPrice(new BigDecimal(orderDO.getItemPrice()));
+        orderModel.setAmount(orderDO.getAmount());
+        orderModel.setUserId(orderDO.getUserId());
+        orderModel.setOrderPrice(new BigDecimal(orderDO.getOrderPrice()));
+        orderModel.setItemId(orderDO.getItemId());
+        return orderModel;
     }
 
     // 该方法的调用原本就在一个事务中，这里必须使用REQUIRES_NEW来开启一个新的事务

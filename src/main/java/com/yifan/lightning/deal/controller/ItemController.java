@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@RestController("item")
-@RequestMapping("/item")
+@RestController
+@RequestMapping("/items")
 @CrossOrigin(allowCredentials = "true", allowedHeaders = "*")
 public class ItemController extends BaseController {
 
@@ -37,20 +37,8 @@ public class ItemController extends BaseController {
     private PromoService promoService;
 
     // 创建商品接口
-    @PostMapping("/create")
-    public CommonReturnType createItem(@RequestParam(name = "title") String title,
-                                       @RequestParam(name = "description") String description,
-                                       @RequestParam(name = "price") BigDecimal price,
-                                       @RequestParam(name = "stock") Integer stock,
-                                       @RequestParam(name = "imgUrl") String imgUrl) throws BusinessException {
-        // 封装service请求，用来创建商品
-        ItemModel itemModel = new ItemModel();
-        itemModel.setTitle(title);
-        itemModel.setDescription(description);
-        itemModel.setStock(stock);
-        itemModel.setPrice(price);
-        itemModel.setImgUrl(imgUrl);
-
+    @PostMapping
+    public CommonReturnType createItem(@RequestBody ItemModel itemModel) throws BusinessException {
         ItemModel itemModelForReturn = itemService.createItem(itemModel);
         // 把创建的商品信息返回给前端
         ItemVO itemVO = this.convertVOFromModel(itemModelForReturn);
@@ -59,8 +47,8 @@ public class ItemController extends BaseController {
     }
 
     // 商品详情页浏览
-    @GetMapping("/get")
-    public CommonReturnType getItem(@RequestParam(name = "id") Integer id) {
+    @GetMapping("/{id}")
+    public CommonReturnType getItem(@PathVariable("id") Integer id) {
         // 此处使用多级缓存，顺序为本地热点缓存 -> redis缓存 -> 数据库
         ItemModel itemModel = null;
 
@@ -84,8 +72,8 @@ public class ItemController extends BaseController {
         return CommonReturnType.create(itemVO);
     }
 
-    // 商品列表页面浏览
-    @GetMapping("/list")
+    // 商品列表
+    @GetMapping
     public CommonReturnType listItem() {
         List<ItemModel> itemModelList = itemService.listItem();
 

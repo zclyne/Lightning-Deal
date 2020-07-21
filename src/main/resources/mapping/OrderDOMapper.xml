@@ -154,4 +154,9 @@
       order_price = #{orderPrice,jdbcType=DOUBLE}
     where id = #{id,jdbcType=VARCHAR}
   </update>
+
+  <select id="listOrdersByUserId" parameterType="int" resultMap="BaseResultMap">
+    select * from order_info
+    where user_id = #{userId,jdbcType=INTEGER}
+  </select>
 </mapper>

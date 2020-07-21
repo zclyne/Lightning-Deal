@@ -1,6 +1,9 @@
 package com.yifan.lightning.deal.service.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 // 用户购物车中的商品
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserItemModel {
 
     private Integer id;

@@ -18,10 +18,11 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.concurrent.*;
 
 @RestController
-@RequestMapping("/order")
+@RequestMapping("/orders")
 @CrossOrigin(allowCredentials = "true", allowedHeaders = "*")
 public class OrderController extends BaseController {
 
@@ -56,7 +57,7 @@ public class OrderController extends BaseController {
     }
 
     // 生成秒杀令牌
-    @PostMapping("/generatetoken")
+    @PostMapping("/token")
     public CommonReturnType generateToken(@RequestParam(name = "itemId") Integer itemId,
                                           @RequestParam(name = "promoId") Integer promoId,
                                           Authentication authentication) throws BusinessException {
@@ -78,17 +79,17 @@ public class OrderController extends BaseController {
     }
 
     // 下单请求接口
-    @PostMapping("/createorder")
-    public CommonReturnType createOrder(@RequestParam(name = "itemId") Integer itemId,
-                                        @RequestParam(name = "promoId", required = false) Integer promoId,
+    @PostMapping
+    public CommonReturnType createOrder(@RequestBody OrderModel orderModel,
                                         @RequestParam(name = "promoToken", required = false) String promoToken,
-                                        @RequestParam(name = "amount") Integer amount,
                                         Authentication authentication) throws BusinessException {
 
         // 获取用户
         UserModel userModel = (UserModel) authentication.getPrincipal();
 
         // 若存在秒杀活动，校验秒杀令牌是否正确
+        Integer promoId = orderModel.getPromoId();
+        Integer itemId = orderModel.getItemId();
         if (promoId != null) {
             String inRedisPromoToken = (String) redisTemplate.opsForValue().get("promo_token_" + promoId + "_userId_" + userModel.getId() + "_itemId_" + itemId);
             if (inRedisPromoToken == null || !StringUtils.equals(promoToken, inRedisPromoToken)) {
@@ -108,6 +109,7 @@ public class OrderController extends BaseController {
             public Object call() throws Exception {
 
                 // 加入库存流水init状态
+                Integer amount = orderModel.getAmount();
                 String stockLogId = itemService.initStockLog(itemId, amount);
 
                 sender.createOrderAndDecreseStock(userModel.getId(), itemId, promoId, amount, stockLogId);
@@ -131,6 +133,19 @@ public class OrderController extends BaseController {
 
         return CommonReturnType.create(null);
 
+    }
+
+    @GetMapping
+    public CommonReturnType listOrdersForUser(Authentication authentication) {
+        UserModel userModel = (UserModel) authentication.getPrincipal();
+        List<OrderModel> orderModels = orderService.listOrdersByUserId(userModel.getId());
+        return CommonReturnType.create(orderModels);
+    }
+
+    @GetMapping("/{orderId}")
+    public CommonReturnType getOrder(@PathVariable("orderId") String orderId) {
+        OrderModel orderModel = orderService.getOrderById(orderId);
+        return CommonReturnType.create(orderModel);
     }
 
 }

@@ -17,6 +17,7 @@ import com.yifan.lightning.deal.validator.ValidationResult;
 import com.yifan.lightning.deal.validator.ValidatorImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
+@CacheConfig(cacheNames = "items")
 public class ItemServiceImpl implements ItemService {
 
     @Autowired
@@ -86,9 +88,9 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Cacheable(key = "#id")
-    public ItemModel getItemById(Integer id) {
-        ItemDO itemDO = itemDOMapper.selectByPrimaryKey(id);
+    @Cacheable(key = "#itemId")
+    public ItemModel getItemById(Integer itemId) {
+        ItemDO itemDO = itemDOMapper.selectByPrimaryKey(itemId);
         if (itemDO == null) {
             return null;
         }

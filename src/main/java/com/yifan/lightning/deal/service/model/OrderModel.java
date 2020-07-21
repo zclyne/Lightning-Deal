@@ -1,8 +1,11 @@
 package com.yifan.lightning.deal.service.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.math.BigDecimal;
 
 // 用户下单的交易模型
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrderModel {
 
     // 订单号使用String，因为会包含日期等信息

@@ -1,5 +1,7 @@
 package com.yifan.lightning.deal.service.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -7,6 +9,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 // 商品领域模型
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ItemModel implements Serializable {
 
     private Integer id;
